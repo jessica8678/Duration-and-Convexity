@@ -87,8 +87,16 @@ tfoot td{border-top:1px solid var(--ink);border-bottom:0;padding-top:7px}
 .assume{margin-top:44px;padding-top:16px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink3)}
 .assume ul{margin:8px 0 0;padding-left:20px}
 [hidden]{display:none!important}
+/* physics <-> bond mapping */
+.map{background:var(--card);border:1px solid var(--rule);border-radius:10px;overflow:hidden;font-size:13px}
+.mr{display:grid;grid-template-columns:1fr 1.5fr 108px;gap:12px;padding:9px 14px;
+border-bottom:1px solid rgba(198,210,223,.55);align-items:center}
+.mr:last-child{border-bottom:0}
+.mr>div:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.mh{font-size:11px;color:var(--ink3);background:rgba(198,210,223,.20)}
+.mf{border-top:1px solid var(--ink)}
 @media (max-width:620px){
-h1{font-size:24px} .bl{flex:1 1 33%} .met .v{font-size:18px} .ctl label{width:44px}
+h1{font-size:24px} .mr{grid-template-columns:1fr 1fr 78px;gap:8px;font-size:12px} .bl{flex:1 1 33%} .met .v{font-size:18px} .ctl label{width:44px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -97,13 +105,13 @@ h1{font-size:24px} .bl{flex:1 1 33%} .met .v{font-size:18px} .ctl label{width:44
 <div class="wrap">
 
 <h1>Where does a bond's price go when rates move?</h1>
-<p class="sub">One bond, one curve, three questions. 5% coupon paid twice a year, 10 years to run, 100 face value.</p>
+<p class="sub">5% coupon paid twice a year, 10 years to run, 100 face value.</p>
 
 <div id="jswarn" style="background:#FAF3DC;border:1px solid #E3CE8F;border-radius:10px;padding:10px 14px;margin:0 0 16px;font-size:13px;color:#6B5A1E">
-You are looking at a <b>static preview</b>. The slider, tabs and hover effects need a live browser &mdash; download this file and open it (double-click) to interact. This notice disappears automatically when the page is running properly.
+<b>Static preview.</b> Download this file and open it to use the slider and tabs.
 </div>
 
-<div class="blotter" id="blotter"><div class="bl"><div class="k">Yield today</div><div class="v">5.00%</div></div><div class="bl"><div class="k">Price today</div><div class="v">100.0000</div></div><div class="bl"><div class="k">Yield now</div><div class="v">6.00%</div></div><div class="bl"><div class="k">Price now</div><div class="v">92.5613</div></div></div>
+<div class="blotter" id="blotter"></div>
 
 <div class="tabs" role="tablist" aria-label="Lessons">
   <button class="tab" role="tab" id="tb1" aria-controls="p1" aria-selected="true">1 &nbsp;Price and yield</button>
@@ -117,58 +125,56 @@ You are looking at a <b>static preview</b>. The slider, tabs and hover effects n
   <span class="out num" id="slout">6.00%</span>
 </div>
 
-<div class="chart"><svg id="cv" viewBox="0 0 860 300" width="100%" role="img" aria-labelledby="cvt"><title id="cvt">Price plotted against yield</title><line x1="56" y1="16.0" x2="838" y2="16.0" stroke="#C6D2DF" stroke-width="1"/><line x1="56" y1="75.0" x2="838" y2="75.0" stroke="#C6D2DF" stroke-width="1"/><line x1="56" y1="134.0" x2="838" y2="134.0" stroke="#C6D2DF" stroke-width="1"/><line x1="56" y1="193.0" x2="838" y2="193.0" stroke="#C6D2DF" stroke-width="1"/><line x1="56" y1="252.0" x2="838" y2="252.0" stroke="#C6D2DF" stroke-width="1"/><line x1="447.0" y1="16" x2="447.0" y2="252" stroke="#8494A8" stroke-width="1" stroke-dasharray="2 4"/><polyline fill="none" stroke="#0E1A2B" stroke-width="2.25" points="56.0,30.5 69.0,35.0 82.1,39.5 95.1,43.9 108.1,48.3 121.2,52.6 134.2,56.9 147.2,61.2 160.3,65.4 173.3,69.5 186.3,73.7 199.4,77.8 212.4,81.8 225.4,85.8 238.5,89.8 251.5,93.8 264.5,97.7 277.6,101.5 290.6,105.4 303.6,109.2 316.7,112.9 329.7,116.6 342.7,120.3 355.8,124.0 368.8,127.6 381.8,131.2 394.9,134.7 407.9,138.2 420.9,141.7 434.0,145.2 447.0,148.6 460.0,152.0 473.1,155.3 486.1,158.6 499.1,161.9 512.2,165.2 525.2,168.4 538.2,171.6 551.3,174.8 564.3,177.9 577.3,181.0 590.4,184.1 603.4,187.2 616.4,190.2 629.5,193.2 642.5,196.1 655.5,199.1 668.6,202.0 681.6,204.9 694.6,207.7 707.7,210.6 720.7,213.4 733.7,216.2 746.8,218.9 759.8,221.7 772.8,224.4 785.9,227.0 798.9,229.7 811.9,232.3 825.0,234.9 838.0,237.5"/><circle cx="447.0" cy="148.6" r="4" fill="#0E1A2B"/><circle cx="577.3" cy="181.0" r="4" fill="#0E1A2B"/><text x="56" y="274" fill="#8494A8" text-anchor="start" style="font:12px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums">2%</text><text x="447.0" y="274" fill="#4A5B74" text-anchor="middle" style="font:12px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums">5% today</text><text x="838" y="274" fill="#8494A8" text-anchor="end" style="font:12px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums">8%</text><text x="48" y="20" fill="#8494A8" text-anchor="end" style="font:12px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums">130</text><text x="48" y="256" fill="#8494A8" text-anchor="end" style="font:12px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums">76</text><text x="447.0" y="300" fill="#8494A8" text-anchor="middle" style="font:12px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums">A hypothetical yield — not time. Nothing here happens tomorrow.</text></svg></div>
-<div class="legend" id="lg"><span><span class="swatch" style="background:#0E1A2B"></span><span style="color:#4A5B74">The real price</span></span></div>
+<div class="chart"><svg id="cv" viewBox="0 0 860 300" width="100%" role="img" aria-labelledby="cvt"><title id="cvt">Price plotted against yield</title></svg></div>
+<div class="legend" id="lg"></div>
 
 <!-- ============ TAB 1 ============ -->
 <section id="p1" role="tabpanel" aria-labelledby="tb1">
-
-<p class="note" style="margin:0 0 10px">The price is nothing more than every future payment, each one shrunk back to what it is worth today. Read each piece:</p>
 
 <div class="aeq"><div class="row">
   <span class="op" style="padding-top:14px">P&nbsp;=</span>
   <div class="term">
     <div class="frac"><span class="top">2.50</span><span class="bot">(1 + y/2)<sup>1</sup></span></div>
-    <div class="lbl"><b>first coupon</b>, six months away &mdash; shrunk once</div>
+    <div class="lbl">first coupon &mdash; <b>shrunk once</b></div>
   </div>
   <span class="op" style="padding-top:14px">+</span>
   <div class="term">
     <div class="frac"><span class="top">2.50</span><span class="bot">(1 + y/2)<sup>2</sup></span></div>
-    <div class="lbl"><b>second coupon</b>, one year away &mdash; shrunk twice</div>
+    <div class="lbl">second coupon &mdash; <b>shrunk twice</b></div>
   </div>
   <span class="op" style="padding-top:14px">+ &hellip; +</span>
   <div class="term">
     <div class="frac"><span class="top">102.50</span><span class="bot">(1 + y/2)<sup>20</sup></span></div>
-    <div class="lbl"><b>last coupon plus your 100 back</b>, ten years away &mdash; shrunk twenty times</div>
+    <div class="lbl">last coupon plus your 100 back &mdash; <b>shrunk twenty times</b></div>
   </div>
 </div></div>
 
 <div class="aeq" style="margin-top:10px;padding:12px 16px">
   <div style="display:flex;gap:26px;flex-wrap:wrap;font-size:13px;color:var(--ink2)">
-    <span><b class="num" style="color:var(--ink)">2.50</b> &nbsp;half of the yearly 5% coupon &mdash; it arrives twice a year</span>
-    <span><b class="num" style="color:var(--ink)">y/2</b> &nbsp;half a year of yield, matching the half-year gap between payments</span>
-    <span><b class="num" style="color:var(--ink)">20</b> &nbsp;payments left: 10 years &times; 2</span>
+    <span><b class="num" style="color:var(--ink)">2.50</b> &nbsp;half of the yearly 5% coupon</span>
+    <span><b class="num" style="color:var(--ink)">y/2</b> &nbsp;half a year of yield</span>
+    <span><b class="num" style="color:var(--ink)">20</b> &nbsp;payments left: 10 &times; 2</span>
   </div>
 </div>
 
 <div class="mets">
-  <div class="met"><div class="k">Yield</div><div class="v" id="a1">6.00%</div></div>
-  <div class="met"><div class="k">Price</div><div class="v" id="a2">92.5613</div></div>
-  <div class="met"><div class="k">Against 100</div><div class="v" id="a3" style="color:var(--loss)">−7.4387</div></div>
+  <div class="met"><div class="k">Yield</div><div class="v" id="a1"></div></div>
+  <div class="met"><div class="k">Price</div><div class="v" id="a2"></div></div>
+  <div class="met"><div class="k">Against 100</div><div class="v" id="a3"></div></div>
 </div>
 
-<p class="note">The yield sits under every payment. Raise it and every payment shrinks &mdash; and the later the payment, the more times it gets shrunk. That is the whole reason the curve above falls, and falls in a bow shape.</p>
+<p class="note">Raise the yield and every payment shrinks &mdash; the later ones more times over. Hence the curve, and its bow.</p>
 
 </section>
 
 <!-- ============ TAB 2 ============ -->
 <section id="p2" role="tabpanel" aria-labelledby="tb2" hidden>
 
-<div class="step"><span class="n">1</span><span class="h">When, on average, do you get your money?</span></div>
+<div class="step"><span class="n">1</span><span class="h">Macaulay duration &mdash; your average wait</span></div>
 
-<div class="chart"><svg id="wb" viewBox="0 0 860 170" width="100%" role="img" aria-labelledby="wbt"><title id="wbt">What each payment is worth today, with the balance point marked</title><rect data-i="0" x="56.0" y="114.1" width="30.1" height="3.9" fill="#0E1A2B" opacity=".82"/><rect data-i="1" x="92.1" y="114.2" width="30.1" height="3.8" fill="#0E1A2B" opacity=".82"/><rect data-i="2" x="128.2" y="114.3" width="30.1" height="3.7" fill="#0E1A2B" opacity=".82"/><rect data-i="3" x="164.3" y="114.4" width="30.1" height="3.6" fill="#0E1A2B" opacity=".82"/><rect data-i="4" x="200.4" y="114.5" width="30.1" height="3.5" fill="#0E1A2B" opacity=".82"/><rect data-i="5" x="236.5" y="114.6" width="30.1" height="3.4" fill="#0E1A2B" opacity=".82"/><rect data-i="6" x="272.6" y="114.6" width="30.1" height="3.4" fill="#0E1A2B" opacity=".82"/><rect data-i="7" x="308.7" y="114.7" width="30.1" height="3.3" fill="#0E1A2B" opacity=".82"/><rect data-i="8" x="344.8" y="114.8" width="30.1" height="3.2" fill="#0E1A2B" opacity=".82"/><rect data-i="9" x="380.9" y="114.9" width="30.1" height="3.1" fill="#0E1A2B" opacity=".82"/><rect data-i="10" x="417.0" y="115.0" width="30.1" height="3.0" fill="#0E1A2B" opacity=".82"/><rect data-i="11" x="453.1" y="115.0" width="30.1" height="3.0" fill="#0E1A2B" opacity=".82"/><rect data-i="12" x="489.2" y="115.1" width="30.1" height="2.9" fill="#0E1A2B" opacity=".82"/><rect data-i="13" x="525.3" y="115.2" width="30.1" height="2.8" fill="#0E1A2B" opacity=".82"/><rect data-i="14" x="561.4" y="115.2" width="30.1" height="2.8" fill="#0E1A2B" opacity=".82"/><rect data-i="15" x="597.5" y="115.3" width="30.1" height="2.7" fill="#0E1A2B" opacity=".82"/><rect data-i="16" x="633.6" y="115.4" width="30.1" height="2.6" fill="#0E1A2B" opacity=".82"/><rect data-i="17" x="669.7" y="115.4" width="30.1" height="2.6" fill="#0E1A2B" opacity=".82"/><rect data-i="18" x="705.8" y="115.5" width="30.1" height="2.5" fill="#0E1A2B" opacity=".82"/><rect data-i="19" x="741.9" y="18.0" width="30.1" height="100.0" fill="#0E1A2B" opacity=".82"/><line x1="46" y1="118" x2="838" y2="118" stroke="#8494A8" stroke-width="1"/><polygon points="611.8,121 603.8,137 619.8,137" fill="#1B54D6"/><text x="611.8" y="156" fill="#1B54D6" text-anchor="middle" style="font:13px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums">balances at 7.99 years</text><text x="56" y="134" fill="#8494A8" text-anchor="start" style="font:12px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums">0.5</text><text x="838" y="134" fill="#8494A8" text-anchor="end" style="font:12px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums">10</text></svg></div>
+<div class="chart"><svg id="wb" viewBox="0 0 860 170" width="100%" role="img" aria-labelledby="wbt"><title id="wbt">What each payment is worth today, with the balance point marked</title></svg></div>
 
-<p class="note">Each bar is one payment, sized by what it is worth today. If these bars sat on a plank, it would balance at the arrow. Hover a row below to light up its bar.</p>
+<p class="note">Each bar is one payment, sized by what it is worth today. On a plank, they balance at the arrow. Hover a row to light up its bar.</p>
 
 <div class="scroll"><table>
 <thead><tr><th>Year</th><th>Payment</th><th>Worth today</th><th>Share of price</th><th>Year &times; share</th></tr></thead>
@@ -176,99 +182,141 @@ You are looking at a <b>static preview</b>. The slider, tabs and hover effects n
 <tfoot><tr><td>Total</td><td></td><td class="num" id="cf-pv"></td><td>100.00%</td><td class="num t1" id="cf-d"></td></tr></tfoot>
 </table></div>
 
-<p class="note">The last column weights each year by how much money it carries. Add it up: <b class="num">7.9894</b>. The bond pays you, on average, 7.99 years from now &mdash; not 10, because the coupons along the way pull the average forward.</p>
+<div class="eq" style="margin-top:10px">&Sigma; year &times; share &nbsp;=&nbsp; <b class="t1">7.9894 years</b> &nbsp;&nbsp;=&nbsp;&nbsp; <b class="t1">15.9789</b> half-year steps</div>
 
-<div class="name">This average waiting time has a name: <b>Macaulay duration</b>. It is measured in years, because it is an average of years.</div>
+<div class="name">Weight every payment by how much of your money it carries, average the years: that is <b>Macaulay duration</b>. Measured in years, because it averages years.</div>
 
-<div class="step"><span class="n">2</span><span class="h">Longer wait, bigger price move</span></div>
+<div class="step"><span class="n">2</span><span class="h">Why a <em>waiting time</em> predicts a <em>price move</em></span></div>
 
-<p class="note" style="margin-top:0">Why does waiting time matter for price? Because a payment 8 years away gets shrunk 16 times by the yield, while one 6 months away gets shrunk once. The longer you wait, the more times a yield rise bites you. So the average wait is almost exactly the price sensitivity &mdash; it just needs one small adjustment:</p>
+<p class="note" style="margin-top:0">A yield rise makes every division slightly harsher. A payment only feels that harshness once per division it endures &mdash; so waiting time is leverage:</p>
 
-<div class="eq">7.9894 &nbsp;&divide;&nbsp; (1 + 0.05/2) &nbsp;=&nbsp; <span class="t1">7.7946</span></div>
-<p class="note">The division by <span class="num">1.025</span> knocks off one half-year of shrinking &mdash; the very first one, which affects every payment equally. Nothing deeper than that.</p>
+<div class="aeq"><div class="row" style="min-width:600px">
+  <div class="term">
+    <div class="frac"><span class="top">2.50</span><span class="bot">1.025<sup>1</sup></span></div>
+    <div class="lbl">endures <b>1</b> division &rarr; feels the harshness <b>once</b></div>
+  </div>
+  <span class="op" style="padding-top:14px">&hellip;</span>
+  <div class="term">
+    <div class="frac"><span class="top">102.50</span><span class="bot">1.025<sup>20</sup></span></div>
+    <div class="lbl">endures <b>20</b> divisions &rarr; feels it <b>twenty times</b></div>
+  </div>
+  <span class="op" style="padding-top:14px">&rArr;</span>
+  <div class="term">
+    <div class="frac"><span class="top t1" style="padding-top:12px">15.9789</span></div>
+    <div class="lbl">the whole bond feels it <b>15.98 times</b> &mdash; its average step count</div>
+  </div>
+</div></div>
 
-<div class="name">The result has a name too: <b>modified duration</b>. Read it as a speed: <b>the price moves 7.79% for every 1% the yield moves</b> &mdash; downhill when yields rise.</div>
+<div class="step"><span class="n">3</span><span class="h">Modified duration &mdash; how hard does one step bite?</span></div>
 
-<div class="step"><span class="n">3</span><span class="h">See it on the curve</span></div>
+<div class="aeq"><div class="row" style="min-width:600px">
+  <div class="term">
+    <div class="frac" style="border:0"><span class="top" style="padding-top:12px">1.0250 &rarr; 1.0300</span></div>
+    <div class="lbl">at 5%, each step divides by 1.0250. At 6%, by 1.0300</div>
+  </div>
+  <span class="op" style="padding-top:14px">&rArr;</span>
+  <div class="term">
+    <div class="frac"><span class="top">0.0050</span><span class="bot">1.0250</span></div>
+    <div class="lbl">but compounding only feels the <b>proportion</b>, not the raw 0.0050</div>
+  </div>
+  <span class="op" style="padding-top:14px">=</span>
+  <div class="term">
+    <div class="frac" style="border:0"><span class="top t1" style="padding-top:12px">0.4878%</span></div>
+    <div class="lbl">how much harsher <b>one step</b> gets, per 1% of yield</div>
+  </div>
+</div></div>
 
-<p class="note" style="margin-top:0">Modified duration is the slope of the blue straight line above. Slide the shock and watch the triangle: the flat dashed side is <b>how far the yield moved</b>, the thick blue side is <b>the drop the slope predicts</b> &mdash; the duration impact.</p>
+<div class="eq" style="margin-top:10px">15.9789 steps &nbsp;&times;&nbsp; 0.4878% &nbsp;=&nbsp; <b class="t1">7.7946%</b> &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--ink3)">same thing: 7.9894 &divide; 1.025 = 7.7946</span></div>
 
-<div class="eq"><span class="t1">7.7946</span> &nbsp;&times;&nbsp; 100.0000 &nbsp;&times;&nbsp; <span id="e2dy">0.0100</span> &nbsp;=&nbsp; <span class="t1" id="e2out">&minus;7.7946</span></div>
+<div class="name">That is <b>modified duration</b>: the price moves <b>7.79%</b> for every 1% of yield. Dividing Macaulay by 1.025 <em>is</em> the proportion step above &mdash; nothing else is going on.</div>
+
+<div class="step"><span class="n">4</span><span class="h">On the curve, that is the slope</span></div>
+
+<p class="note" style="margin-top:0">Taylor expansion says any smooth curve, walked a short way, is <b>slope &times; distance</b> plus a bend correction:</p>
+
+<div class="aeq"><div class="row" style="min-width:600px">
+  <span class="op" style="padding-top:14px">&Delta;P&nbsp;=</span>
+  <div class="term">
+    <div class="frac" style="border:0"><span class="top t1" style="padding-top:12px">&minus;7.7946 &times; 100 &times; &Delta;y</span></div>
+    <div class="lbl"><b>term 1</b> &mdash; modified duration is the slope</div>
+  </div>
+  <span class="op" style="padding-top:14px">+</span>
+  <div class="term">
+    <div class="frac" style="border:0"><span class="top" style="padding-top:12px;color:var(--ink3)">the bend</span></div>
+    <div class="lbl" style="color:var(--ink3)"><b>term 2</b> &mdash; tab 3</div>
+  </div>
+</div></div>
+
+<div class="eq" style="margin-top:10px">&minus;7.7946 &times; 100.0000 &times; <span id="e2dy"></span> &nbsp;=&nbsp; <span class="t1" id="e2out"></span></div>
 
 <div class="mets">
-  <div class="met"><div class="k" style="color:var(--first)">The slope predicts</div><div class="v" id="b1" style="color:var(--first)">−7.7946</div></div>
-  <div class="met"><div class="k">The price actually did</div><div class="v" id="b2">−7.4387</div></div>
+  <div class="met"><div class="k" style="color:var(--first)">Term 1 predicts</div><div class="v" id="b1" style="color:var(--first)"></div></div>
+  <div class="met"><div class="k">The price actually did</div><div class="v" id="b2"></div></div>
 </div>
 
-<p class="note">Close &mdash; but look at the chart: the black curve sits above the blue line, on <em>both</em> sides. The slope keeps missing, always in the same direction. That miss is the next tab.</p>
+<p class="note">The black curve sits above the blue line on <em>both</em> sides. Term 1 always misses the same way.</p>
 
 </section>
 
 <!-- ============ TAB 3 ============ -->
 <section id="p3" role="tabpanel" aria-labelledby="tb3" hidden>
 
-<div class="step"><span class="n">1</span><span class="h">The straight line always misses on the same side</span></div>
+<div class="step"><span class="n">1</span><span class="h">The missing term 2</span></div>
 
-<p class="note" style="margin-top:0">The purple bar on the chart is the distance from the straight line up to the real price. Slide the shock left and right: the bar grows and shrinks, but it never switches sides &mdash; the real price always finishes <em>above</em> the line.</p>
+<p class="note" style="margin-top:0">The purple bar on the chart is the distance from the straight line up to the real price. Slide either way: it never changes sides.</p>
 
 <div class="mets">
   <div class="met"><div class="k">The gap right now</div><div class="v" id="c1"></div></div>
 </div>
 
-<div class="step"><span class="n">2</span><span class="h">Why? Because the slope refuses to stay put</span></div>
+<div class="step"><span class="n">2</span><span class="h">You already know this formula: &frac12;at&sup2;</span></div>
 
-<p class="note" style="margin-top:0">When yields rise, every payment is worth less &mdash; and a bond that is worth less has <b>less left to lose</b>. So the curve gets flatter out to the right, and steeper out to the left. The short dark tick on the chart is the slope where you are standing right now. The blue line froze the slope at its starting value and used it the whole way.</p>
+<p class="note" style="margin-top:0">A car with speed <span class="num">v</span> and acceleration <span class="num">a</span> travels <span class="num">vt + &frac12;at&sup2;</span>. A bond walked along its curve is the same object, term for term:</p>
 
-<div class="mets">
-  <div class="met"><div class="k">Slope at the start</div><div class="v">7.79</div></div>
-  <div class="met"><div class="k">Slope where you are</div><div class="v" id="sl-here"></div></div>
-  <div class="met"><div class="k">It drifted by</div><div class="v" id="sl-drift"></div></div>
+<div class="map">
+  <div class="mr mh"><div>Falling body</div><div>Bond</div><div>Here</div></div>
+  <div class="mr"><div>time elapsed &nbsp;<span class="num">t</span></div><div>how far the yield moved &nbsp;<span class="num">&Delta;y</span></div><div class="num" id="m-dy"></div></div>
+  <div class="mr"><div>starting speed &nbsp;<span class="num">v</span></div><div class="t1">slope &nbsp;<span class="num">&minus;D<sub>mod</sub> &times; P</span></div><div class="num t1">&minus;779.46</div></div>
+  <div class="mr"><div>acceleration &nbsp;<span class="num">a</span></div><div class="t2">bend &nbsp;<span class="num">C &times; P</span></div><div class="num t2">7362.87</div></div>
+  <div class="mr mf"><div>distance &nbsp;<span class="num">vt + &frac12;at&sup2;</span></div><div>price change &nbsp;<span class="num">slope&middot;&Delta;y + &frac12;&middot;bend&middot;&Delta;y&sup2;</span></div><div class="num" id="m-tot"></div></div>
 </div>
-<p class="note" style="font-size:12px;color:var(--ink3)">Slope means: dollars of price for each 1% of yield. Watch these while you slide.</p>
 
-<p class="note">And the drift always works for you. The bond goes numb exactly while you are losing, and turns extra sensitive exactly while you are gaining. That one sentence is the entire secret of the gap.</p>
+<p class="note">Term 1 is the car that never accelerates. Term 2 is everything the acceleration adds &mdash; and that is exactly the triangle under the extra-speed line:</p>
 
-<div class="step"><span class="n">3</span><span class="h">So the gap is: half the drift, times the move</span></div>
+<div class="chart"><svg id="tri" viewBox="0 0 860 180" width="100%" role="img" aria-labelledby="trit"><title id="trit">The gap as the triangle under the extra-speed line</title></svg></div>
 
-<p class="note" style="margin-top:0">The drift starts at zero and builds steadily across the move &mdash; so on average, the slope you used was off by <b>half the total drift</b>. And the drift itself grows with the move: double the move, double the drift. The move therefore enters twice. That is all &Delta;y&sup2; means.</p>
-
-<div class="aeq"><div class="row" style="min-width:560px">
+<div class="aeq" style="margin-top:10px"><div class="row" style="min-width:520px">
   <div class="term">
     <div class="frac" style="border:0"><span class="top t3" style="padding-top:12px">&frac12;</span></div>
-    <div class="lbl">the drift builds evenly from zero, so on average you feel <b>half</b> of it</div>
+    <div class="lbl">extra speed grows from zero, so you average <b>half</b> of it &mdash; the triangle, not the box</div>
   </div>
   <span class="op" style="padding-top:14px">&times;</span>
   <div class="term">
-    <div class="frac" style="border:0"><span class="top t2" style="padding-top:12px">73.6287</span></div>
-    <div class="lbl">the <b>drift rate</b>: how quickly the slope changes as the yield moves</div>
-  </div>
-  <span class="op" style="padding-top:14px">&times;</span>
-  <div class="term">
-    <div class="frac" style="border:0"><span class="top" style="padding-top:12px">100.0000</span></div>
-    <div class="lbl">today&rsquo;s price &mdash; the drift rate is quoted per unit of price</div>
+    <div class="frac" style="border:0"><span class="top t2" style="padding-top:12px">a</span></div>
+    <div class="lbl">the <b>acceleration</b>: 7362.87</div>
   </div>
   <span class="op" style="padding-top:14px">&times;</span>
   <div class="term">
     <div class="frac" style="border:0"><span class="top t4" style="padding-top:12px">&Delta;y&sup2;</span></div>
-    <div class="lbl">once because the drift <b>grows with</b> the move, once because you <b>ride it across</b> the move</div>
+    <div class="lbl">once to build the extra speed, once to <b>carry</b> it across the move</div>
   </div>
 </div></div>
 
-<div class="eq" style="margin-top:10px"><span class="t3">&frac12;</span> &times; <span class="t2">73.6287</span> &times; 100.0000 &times; <span id="e3dy">0.0100</span><sup>2</sup> &nbsp;=&nbsp; <span class="t2" id="e3out">+0.3681</span></div>
+<div class="step"><span class="n">3</span><span class="h">Fill in the numbers</span></div>
+
+<div class="eq"><span class="t3">&frac12;</span> &times; <span class="t2">73.6287</span> &times; 100.0000 &times; <span id="e3dy"></span><sup>2</sup> &nbsp;=&nbsp; <span class="t2" id="e3out"></span></div>
 
 <div class="mets">
   <div class="met"><div class="k">Gap on the chart</div><div class="v" id="c1b"></div></div>
-  <div class="met"><div class="k" style="color:var(--second)">The formula fills</div><div class="v" id="c2" style="color:var(--second)"></div></div>
-  <div class="met"><div class="k">Still left over</div><div class="v" id="c3" style="color:var(--resid)"></div></div>
+  <div class="met"><div class="k" style="color:var(--second)">Term 2 fills</div><div class="v" id="c2" style="color:var(--second)"></div></div>
+  <div class="met"><div class="k">Left for term 3</div><div class="v" id="c3" style="color:var(--resid)"></div></div>
 </div>
 
-<div class="name p2">The drift rate <b class="num">73.6287</b> is what people call <b>convexity</b>. Because the drift always helps, this correction is always <b>added</b> &mdash; whichever way yields went.</div>
+<div class="name p2">That acceleration <b class="num">73.6287</b> is <b>convexity</b>. Because &Delta;y&sup2; is never negative, term 2 is always <b>added</b> &mdash; whichever way yields went.</div>
 
-<p class="note" style="font-size:12px;color:var(--ink3)">Seen &frac12;&thinsp;a&thinsp;t&sup2; in school physics? Same shape. Duration is your speed; convexity is your acceleration.</p>
+<div class="step"><span class="n">4</span><span class="h">Where 73.6287 comes from</span></div>
 
-<div class="step"><span class="n">4</span><span class="h">Where 73.6287 comes from &mdash; same table, one new column</span></div>
-
-<p class="note" style="margin-top:0">Duration weighted each payment by <span class="num">year</span>. The drift rate comes from weighting each payment by <span class="num">year &times; (year + &frac12;)</span> instead &mdash; the far payments count much more, because they are the ones whose sensitivity changes fastest. (The extra &frac12; is one payment period; it appears because the shrinking happens in half-year steps.)</p>
+<p class="note" style="margin-top:0">Duration weighted each payment by <span class="num">year</span>. Acceleration weights by <span class="num">year &times; (year + &frac12;)</span> &mdash; far payments dominate, because their sensitivity changes fastest.</p>
 
 <div class="scroll"><table>
 <thead><tr><th>Year</th><th>Share of price</th><th>Year &times; share</th><th>Year &times; (year+&frac12;) &times; share</th></tr></thead>
@@ -276,8 +324,7 @@ You are looking at a <b>static preview</b>. The slider, tabs and hover effects n
 <tfoot><tr><td>Total</td><td>100.00%</td><td class="num t1" id="x-d"></td><td class="num t2" id="x-c"></td></tr></tfoot>
 </table></div>
 
-<div class="eq" style="margin-top:10px"><span id="x-raw"></span> &nbsp;&divide;&nbsp; (1 + 0.05/2)<sup>2</sup> &nbsp;=&nbsp; <span class="t2">73.6287</span></div>
-<p class="note">One last touch-up, the same one duration needed &mdash; except duration divided by <span class="num">1.025</span> once, and this divides twice. Duration was about one round of shrinking; the drift is about shrinking on top of shrinking, so the adjustment happens twice.</p>
+<div class="eq" style="margin-top:10px"><span id="x-raw"></span> &nbsp;&divide;&nbsp; (1.025)<sup>2</sup> &nbsp;=&nbsp; <span class="t2">73.6287</span> &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--ink3)">same proportion fix as duration &mdash; twice, because the bend compounds twice</span></div>
 
 </section>
 
@@ -285,14 +332,13 @@ You are looking at a <b>static preview</b>. The slider, tabs and hover effects n
 What this leaves out
 <ul>
 <li>One flat yield for every payment, rather than a real yield curve</li>
-<li>Settlement sits exactly on a coupon date, so there is no accrued interest</li>
-<li>No credit risk, no tax, no embedded options such as calls or prepayment</li>
-<li>Yields move in parallel &mdash; the curve does not steepen or flatten</li>
+<li>Settlement sits on a coupon date, so there is no accrued interest</li>
+<li>No credit risk, no tax, no calls or prepayment</li>
+<li>Yields move in parallel</li>
 </ul>
 </div>
 
 </div>
-
 <script>
 (function(){
 "use strict";
@@ -324,6 +370,7 @@ function svgTxt(x,y,s,fill,anchor,size){
   return '<text x="'+x+'" y="'+y+'" fill="'+fill+'" text-anchor="'+(anchor||"start")+
     '" style="font:'+(size||12)+'px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums">'+s+'</text>';
 }
+function fmt(v,d){ return (v<0?"\u2212":"+")+Math.abs(v).toFixed(d===undefined?4:d); }
 
 function drawCurve(y){
   var g="", i, gy, xa=sx(Y0), xb=sx(y), ya=sy(P0);
@@ -336,7 +383,7 @@ function drawCurve(y){
     g+='<line x1="'+xa+'" y1="'+ya.toFixed(1)+'" x2="'+xb.toFixed(1)+'" y2="'+ya.toFixed(1)+'" stroke="#1B54D6" stroke-width="1.5" stroke-dasharray="4 3"/>';
     g+='<line x1="'+xb.toFixed(1)+'" y1="'+ya.toFixed(1)+'" x2="'+xb.toFixed(1)+'" y2="'+sy(fLine(y)).toFixed(1)+'" stroke="#1B54D6" stroke-width="5"/>';
     g+=svgTxt((xa+xb)/2, ya-8, "how far the yield moved", "#1B54D6", "middle");
-    g+=svgTxt(xb+(y>Y0?9:-9), (ya+sy(fLine(y)))/2+4, "duration impact", "#1B54D6", y>Y0?"start":"end");
+    g+=svgTxt(xb+(y>Y0?9:-9), (ya+sy(fLine(y)))/2+4, "term 1", "#1B54D6", y>Y0?"start":"end");
   }
   if(tab===3 && moved){
     g+='<line x1="'+xb.toFixed(1)+'" y1="'+sy(fLine(y)).toFixed(1)+'" x2="'+xb.toFixed(1)+'" y2="'+sy(fExact(y)).toFixed(1)+'" stroke="#6B3FA0" stroke-width="6"/>';
@@ -347,7 +394,7 @@ function drawCurve(y){
     g+='<line x1="'+sx(y-dseg).toFixed(1)+'" y1="'+sy(bb.P-slp*dseg).toFixed(1)+
        '" x2="'+sx(y+dseg).toFixed(1)+'" y2="'+sy(bb.P+slp*dseg).toFixed(1)+
        '" stroke="#0E1A2B" stroke-width="3" stroke-linecap="round"/>';
-    g+=svgTxt(xb, sy(bb.P)-14, "slope here", "#4A5B74", "middle");
+    g+=svgTxt(xb, sy(bb.P)-14, "speed here", "#4A5B74", "middle");
   }
   if(tab>=2) g+='<polyline fill="none" stroke="#1B54D6" stroke-width="1.75" points="'+pline(fLine)+'"/>';
   if(tab>=3) g+='<polyline fill="none" stroke="#6B3FA0" stroke-width="1.75" points="'+pline(fPara)+'"/>';
@@ -360,14 +407,14 @@ function drawCurve(y){
   g+=svgTxt(X1, T1+22, "8%", "#8494A8", "end");
   g+=svgTxt(X0-8, T0+4, PHI.toFixed(0), "#8494A8", "end");
   g+=svgTxt(X0-8, T1+4, PLO.toFixed(0), "#8494A8", "end");
-  g+=svgTxt((X0+X1)/2, T1+48, "A hypothetical yield \u2014 not time. Nothing here happens tomorrow.", "#8494A8", "middle");
+  g+=svgTxt((X0+X1)/2, T1+48, "A hypothetical yield \u2014 not time.", "#8494A8", "middle");
 
   el("cv").innerHTML='<title id="cvt">Price plotted against yield</title>'+g;
 
   function chip(c,label,tc){ return '<span><span class="swatch" style="background:'+c+'"></span><span style="color:'+tc+'">'+label+'</span></span>'; }
   var L=chip("#0E1A2B","The real price","#4A5B74");
-  if(tab>=2) L+=chip("#1B54D6","Straight line from the slope","#1B54D6");
-  if(tab>=3) L+=chip("#6B3FA0","Slope plus the bend","#6B3FA0");
+  if(tab>=2) L+=chip("#1B54D6","Term 1 only \u2014 constant speed","#1B54D6");
+  if(tab>=3) L+=chip("#6B3FA0","Term 1 + term 2","#6B3FA0");
   el("lg").innerHTML=L;
 }
 
@@ -389,19 +436,32 @@ function drawBars(hi){
   el("wb").innerHTML='<title id="wbt">What each payment is worth today, with the balance point marked</title>'+g;
 }
 
+/* The gap drawn the way physics draws it: extra speed against distance travelled.
+   Area of the triangle = 1/2 * a * dy^2 = exactly the convexity term. */
 function drawTri(dy){
   var t=el("tri"); if(!t) return;
-  var ad=Math.abs(dy), x0=120, x1=760, yb=132, yt=28, g="";
-  g+='<polygon points="'+x0+','+yb+' '+x1+','+yb+' '+x1+','+yt+'" fill="#EFE9F7" stroke="#6B3FA0" stroke-width="1.5"/>';
-  g+='<line x1="'+x0+'" y1="'+yb+'" x2="'+x1+'" y2="'+yb+'" stroke="#4A5B74" stroke-width="1.5"/>';
-  g+=svgTxt(x0+30, yt+16, "no extra at the start \u2014 the line and the curve touch", "#8494A8", "start", 12);
-  g+=svgTxt((x0+x1)/2, yb+26, "base \u2014 how far the yield moved"+(ad>1e-9?":  "+ad.toFixed(4):""), "#4A5B74", "middle", 13);
-  g+=svgTxt(x1, yt-10, "height \u2014 the extra slope you have picked up by the end", "#6B3FA0", "end", 13);
-  g+=svgTxt(x0+(x1-x0)*0.66, yb-20, "gap = \u00bd \u00d7 base \u00d7 height", "#6B3FA0", "middle", 14);
-  t.innerHTML='<title id="trit">The gap drawn as a triangle: base is the move, height is the extra slope picked up</title>'+g;
-}
+  var ad=Math.abs(dy), x0=150, x1=700, yb=138, yt=36, g="";
+  var acc=CONV*P0, h=acc*ad, area=0.5*acc*ad*ad;
 
-function fmt(v,d){ return (v<0?"\u2212":"+")+Math.abs(v).toFixed(d===undefined?4:d); }
+  g+='<line x1="'+x0+'" y1="'+yb+'" x2="'+(x1+70)+'" y2="'+yb+'" stroke="#8494A8" stroke-width="1"/>';
+  g+='<line x1="'+x0+'" y1="'+yb+'" x2="'+x0+'" y2="'+(yt-18)+'" stroke="#8494A8" stroke-width="1"/>';
+  g+=svgTxt(x0-8, yb+4, "0", "#8494A8", "end");
+  g+=svgTxt(x0+4, yt-24, "extra speed picked up", "#6B3FA0", "start", 12);
+  g+=svgTxt((x0+x1)/2, yb+50, "distance travelled along the yield axis", "#8494A8", "middle", 12);
+
+  if(ad<1e-9){
+    g+=svgTxt((x0+x1)/2, (yb+yt)/2, "move the slider \u2014 with no move there is no extra speed, and no gap", "#8494A8", "middle", 13);
+  }else{
+    g+='<polygon points="'+x0+','+yb+' '+x1+','+yb+' '+x1+','+yt+'" fill="#EFE9F7" stroke="#6B3FA0" stroke-width="1.5"/>';
+    g+='<line x1="'+x1+'" y1="'+yb+'" x2="'+x1+'" y2="'+yt+'" stroke="#6B3FA0" stroke-width="2"/>';
+    g+=svgTxt((x0+x1)/2, yb+26, "base = the move: "+ad.toFixed(4), "#4A5B74", "middle", 13);
+    g+=svgTxt(x1+10, yt+5, "height = a \u00d7 move", "#6B3FA0", "start", 12);
+    g+=svgTxt(x1+10, yt+21, h.toFixed(2), "#6B3FA0", "start", 13);
+    g+=svgTxt(x0+(x1-x0)*0.55, yb-22, "area = \u00bd \u00d7 base \u00d7 height = "+fmt(area), "#6B3FA0", "middle", 14);
+    g+=svgTxt(x0+8, yb-8, "speed starts unchanged", "#8494A8", "start", 11);
+  }
+  t.innerHTML='<title id="trit">The gap as the triangle under the extra-speed line</title>'+g;
+}
 
 (function buildTables(){
   var a="", b="", i, r, w;
@@ -438,7 +498,7 @@ function update(){
       act=b.P-P0, dur=-DMOD*P0*dy, con=0.5*CONV*P0*dy*dy,
       gap=act-dur, res=act-dur-con;
 
-  el("sllab").textContent = tab===1 ? "Yield" : "Shock";
+  el("sllab").textContent = tab===1 ? "Yield" : "Move";
   el("slout").textContent = tab===1 ? (y*100).toFixed(2)+"%"
     : (dy>=0?"+":"\u2212")+Math.abs(dy*10000).toFixed(0)+"bp";
 
@@ -447,8 +507,8 @@ function update(){
     '<div class="bl"><div class="k">Price today</div><div class="v">100.0000</div></div>'+
     '<div class="bl"><div class="k">Yield now</div><div class="v">'+(y*100).toFixed(2)+'%</div></div>'+
     '<div class="bl"><div class="k">Price now</div><div class="v">'+b.P.toFixed(4)+'</div></div>'+
-    (tab>=2?'<div class="bl"><div class="k" style="color:var(--first)">Duration impact</div><div class="v" style="color:var(--first)">'+fmt(dur)+'</div></div>':'')+
-    (tab>=3?'<div class="bl"><div class="k" style="color:var(--second)">Convexity adds</div><div class="v" style="color:var(--second)">'+fmt(con)+'</div></div>':'');
+    (tab>=2?'<div class="bl"><div class="k" style="color:var(--first)">Term 1</div><div class="v" style="color:var(--first)">'+fmt(dur)+'</div></div>':'')+
+    (tab>=3?'<div class="bl"><div class="k" style="color:var(--second)">Term 2</div><div class="v" style="color:var(--second)">'+fmt(con)+'</div></div>':'');
 
   el("a1").textContent=(y*100).toFixed(2)+"%";
   el("a2").textContent=b.P.toFixed(4);
@@ -461,13 +521,12 @@ function update(){
 
   el("c1").textContent=fmt(gap);
   el("c1b").textContent=fmt(gap);
-  var sH=b.dmod*b.P/100, sS=DMOD*P0/100;
-  el("sl-here").textContent=sH.toFixed(2);
-  el("sl-drift").textContent=Math.abs(sH-sS)<5e-3?"0.00":fmt(sH-sS,2);
   el("c2").textContent=fmt(con);
   el("c3").textContent=fmt(res);
   el("e3dy").textContent=dy.toFixed(4);
   el("e3out").textContent=fmt(con);
+  el("m-dy").textContent=dy.toFixed(4);
+  el("m-tot").textContent=fmt(dur+con);
 
   drawCurve(y);
   if(tab===2) drawBars(null);
