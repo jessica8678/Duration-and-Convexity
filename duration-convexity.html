@@ -342,7 +342,12 @@ What this leaves out
 <script>
 (function(){
 "use strict";
-var w=document.getElementById("jswarn"); if(w) w.parentNode.removeChild(w);
+/* #jswarn is a liveness probe, not decoration. It is removed only after
+   setTab(1) returns, so: banner gone = init fully succeeded; yellow banner =
+   scripts never ran (preview pane); red banner = init threw, message on screen.
+   Everything below sits inside the try; left unindented to keep diffs readable. */
+var warn=document.getElementById("jswarn");
+try{
 var M=2, T=10, CPN=0.05, FACE=100, N=T*M, CF=FACE*CPN/M, Y0=0.05;
 
 function bond(y){
@@ -552,6 +557,26 @@ btns.forEach(function(b,i){
 });
 el("sl").addEventListener("input",update);
 setTab(1);
+
+/* Reached only if every line above ran. */
+if(warn && warn.parentNode) warn.parentNode.removeChild(warn);
+
+}catch(err){
+  console.error("Duration and convexity: initialisation failed.", err);
+  if(warn){
+    warn.style.background="#FBEAEA";
+    warn.style.borderColor="#E0A0A0";
+    warn.style.color="#8A2B2B";
+    /* textContent, not innerHTML: the message is untrusted engine output. */
+    warn.textContent="";
+    var hd=document.createElement("b");
+    hd.textContent="This page failed to start.";
+    warn.appendChild(hd);
+    warn.appendChild(document.createTextNode(
+      " "+((err&&err.message)?err.message:String(err))+
+      " — nothing on this page is live. Full trace in the browser console."));
+  }
+}
 })();
 </script>
 </body>
