@@ -1,0 +1,12 @@
+{
+  "name": "duration-convexity",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive derivation of duration and convexity from the Taylor expansion",
+  "scripts": {
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "devDependencies": {
+    "jsdom": "^26.0.0"
+  }
+}
