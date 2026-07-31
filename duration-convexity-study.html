@@ -470,5 +470,128 @@ try{
 }
 })();
 </script>
+<script>
+/* Reading tracker. Local only: nothing leaves the page, no network calls.
+   Records where attention lands and where the reader goes back to. */
+(function(){
+"use strict";
+var T0=Date.now(), tabNow=0, tabT=Date.now();
+var log={started:new Date().toISOString(), tabs:[], blocks:{}, backs:[],
+         drawers:[], slider:{moves:0,min:0,max:0}, inputs:[], depth:{}};
+
+/* --- name every readable block, per tab --- */
+var SEL='.lead,.eq,.note,.handoff,.recall,.chain,.mets,.scroll,details';
+function label(el){
+  var t=(el.textContent||"").replace(/\s+/g," ").trim();
+  var cls=el.className.split(" ")[0]||el.tagName.toLowerCase();
+  return cls+": "+(t.slice(0,44)||"(empty)");
+}
+var blocks=[];
+[0,1,2,3].forEach(function(k){
+  var sec=document.getElementById("p"+k); if(!sec) return;
+  Array.prototype.forEach.call(sec.querySelectorAll(SEL),function(el,i){
+    if(el.closest("details")&&el.tagName!=="DETAILS") return;   /* count the drawer once */
+    var id="t"+k+"."+String(i).padStart(2,"0");
+    el.dataset.trk=id; blocks.push({id:id,tab:k,el:el});
+    log.blocks[id]={tab:k,name:label(el),seconds:0,views:0};
+  });
+});
+
+/* --- dwell: accumulate time a block sits in the middle band of the screen --- */
+var inView={};
+var io=new IntersectionObserver(function(es){
+  es.forEach(function(e){
+    var id=e.target.dataset.trk; if(!id) return;
+    if(e.isIntersecting&&!inView[id]){ inView[id]=Date.now(); log.blocks[id].views++; }
+    else if(!e.isIntersecting&&inView[id]){
+      log.blocks[id].seconds+=(Date.now()-inView[id])/1000; inView[id]=0;
+    }
+  });
+},{rootMargin:"-30% 0px -30% 0px",threshold:0});
+blocks.forEach(function(b){io.observe(b.el);});
+
+/* --- scroll reversals: a flip from down to up is the reader going back for something --- */
+var lastY=window.scrollY, dir=0, settle=null;
+window.addEventListener("scroll",function(){
+  var y=window.scrollY, d=y>lastY?1:(y<lastY?-1:0);
+  log.depth["t"+tabNow]=Math.max(log.depth["t"+tabNow]||0,
+    Math.round((y+innerHeight)/document.body.scrollHeight*100));
+  if(d&&dir===1&&d===-1){
+    clearTimeout(settle);
+    settle=setTimeout(function(){
+      var mid=innerHeight/2, best=null, bd=1e9;
+      blocks.forEach(function(b){
+        if(b.tab!==tabNow) return;
+        var r=b.el.getBoundingClientRect(), c=Math.abs((r.top+r.bottom)/2-mid);
+        if(c<bd){bd=c;best=b;}
+      });
+      if(best) log.backs.push({at:((Date.now()-T0)/1000).toFixed(1)+"s",
+                              tab:tabNow, to:best.id, what:log.blocks[best.id].name});
+    },450);
+  }
+  if(d) dir=d;
+  lastY=y;
+},{passive:true});
+
+/* --- tab switches --- */
+["tb0","tb1","tb2","tb3"].forEach(function(id,i){
+  var b=document.getElementById(id); if(!b) return;
+  b.addEventListener("click",function(){
+    log.tabs.push({tab:tabNow, seconds:+((Date.now()-tabT)/1000).toFixed(1)});
+    tabNow=i; tabT=Date.now();
+  });
+});
+
+/* --- drawers, slider, inputs --- */
+Array.prototype.forEach.call(document.querySelectorAll("details"),function(d,i){
+  d.addEventListener("toggle",function(){
+    if(d.open) log.drawers.push({at:((Date.now()-T0)/1000).toFixed(1)+"s",
+                                 tab:tabNow, drawer:i});
+  });
+});
+var sl=document.getElementById("sl");
+if(sl) sl.addEventListener("input",function(){
+  var v=+sl.value; log.slider.moves++;
+  log.slider.min=Math.min(log.slider.min,v); log.slider.max=Math.max(log.slider.max,v);
+});
+["i-c","i-T","i-y"].forEach(function(id){
+  var e=document.getElementById(id); if(!e) return;
+  var last=e.value;
+  e.addEventListener("change",function(){
+    if(e.value!==last) log.inputs.push({at:((Date.now()-T0)/1000).toFixed(1)+"s",
+                                        field:id, from:last, to:e.value});
+    last=e.value;
+  });
+});
+
+/* --- export --- */
+function finish(){
+  Object.keys(inView).forEach(function(id){
+    if(inView[id]) log.blocks[id].seconds+=(Date.now()-inView[id])/1000;
+  });
+  log.tabs.push({tab:tabNow, seconds:+((Date.now()-tabT)/1000).toFixed(1)});
+  log.totalSeconds=+((Date.now()-T0)/1000).toFixed(1);
+  Object.keys(log.blocks).forEach(function(k){
+    log.blocks[k].seconds=+log.blocks[k].seconds.toFixed(1);
+  });
+  return log;
+}
+function download(){
+  var d=finish(), s=JSON.stringify(d,null,1);
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([s],{type:"application/json"}));
+  a.download="reading-"+Date.now()+".json"; a.click();
+}
+var btn=document.createElement("button");
+btn.textContent="Finish and save";
+btn.style.cssText="position:fixed;right:16px;bottom:16px;z-index:99;padding:10px 16px;"+
+ "border:1px solid #C6D2DF;border-radius:9px;background:#fff;color:#0E1A2B;cursor:pointer;"+
+ "font:13px ui-sans-serif,-apple-system,sans-serif;box-shadow:0 2px 8px rgba(14,26,43,.12)";
+btn.onclick=download;
+document.body.appendChild(btn);
+window.readingLog=finish;
+})();
+</script>
+
 </body>
 </html>
