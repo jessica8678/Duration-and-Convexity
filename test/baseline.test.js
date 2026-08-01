@@ -27,13 +27,16 @@ const BASE = {
   PppOverP: "74.9977",   // convexity, P″/P
 };
 
-/* Load the page and collect anything the scripts threw. */
-function open() {
-  const thrown = [];
+/* Load the page and collect anything the scripts threw.
+   `source` lets a test load a deliberately broken copy. */
+function open(source = html) {
+  const thrown = [];  // uncaught — reaches jsdom as an error event
+  const logged = [];  // caught and passed to console.error by the page
   const vc = new VirtualConsole();
   vc.on("jsdomError", (e) => thrown.push(e));
-  const dom = new JSDOM(html, { runScripts: "dangerously", virtualConsole: vc });
-  return { dom, win: dom.window, doc: dom.window.document, thrown };
+  vc.on("error", (...args) => logged.push(args.map(String).join(" ")));
+  const dom = new JSDOM(source, { runScripts: "dangerously", virtualConsole: vc });
+  return { dom, win: dom.window, doc: dom.window.document, thrown, logged };
 }
 
 const $ = (doc, id) => doc.getElementById(id);
@@ -80,6 +83,45 @@ describe("page boots", () => {
     assert.equal($(ctx.doc, "i-y").value, "5.00");
     assert.equal($(ctx.doc, "sl").value, "100");
     assert.match(text(ctx.doc, "slout"), /^\+100bp/);
+  });
+});
+
+/* The state D10 exists to catch: init throws, so the page is dead. It must say
+   so rather than sit there looking like an ordinary static preview. */
+describe("initialisation failure is visible", () => {
+  // Break a required element so update() throws inside the guarded block.
+  const broken = html.replace('id="o-p0"', 'id="o-p0-gone"');
+  let ctx;
+  before(() => {
+    assert.notEqual(broken, html, "fault was actually injected");
+    ctx = open(broken);
+  });
+
+  test("the banner survives instead of being removed", () => {
+    assert.notEqual($(ctx.doc, "jswarn"), null);
+  });
+
+  test("the banner is marked bad", () => {
+    assert.equal($(ctx.doc, "jswarn").classList.contains("bad"), true);
+  });
+
+  test("it says the page failed and carries the error message", () => {
+    const t = $(ctx.doc, "jswarn").textContent;
+    assert.match(t, /failed to start/i);
+    assert.match(t, /Cannot set properties of null/);
+    assert.doesNotMatch(t, /Static preview/i, "no longer claims to be a preview");
+  });
+
+  test("#wrap keeps no-js, so nothing pretends to be live", () => {
+    assert.equal($(ctx.doc, "wrap").classList.contains("no-js"), true);
+  });
+
+  test("the original exception reached the console", () => {
+    // the page catches it, so it arrives as console.error rather than uncaught
+    assert.ok(
+      ctx.logged.some((line) => /Cannot set properties of null/.test(line)),
+      "expected the original error on the console, got: " + JSON.stringify(ctx.logged)
+    );
   });
 });
 
@@ -263,6 +305,29 @@ describe("illegal input", () => {
       assert.equal($(doc, f.wrap).classList.contains("err"), false);
     });
   }
+
+  /* parseFloat alone prefix-parses, so these used to be accepted as 5. */
+  test('"5%" is still accepted', () => {
+    const { win, doc } = open();
+    setInput(win, $(doc, "i-c"), "5%");
+    assert.equal($(doc, "w-c").classList.contains("err"), false);
+    assert.equal(text(doc, "o-p0"), BASE.priceToday);
+    assert.equal(chainResult(doc, "chain1", "hi1"), BASE.negPpOverP);
+  });
+
+  test('"5abc" is rejected', () => {
+    const { win, doc } = open();
+    setInput(win, $(doc, "i-c"), "5abc");
+    assert.equal($(doc, "w-c").classList.contains("err"), true);
+    assert.equal(text(doc, "o-p0"), BASE.priceToday, "last good value survives");
+  });
+
+  test('"" is rejected', () => {
+    const { win, doc } = open();
+    setInput(win, $(doc, "i-c"), "");
+    assert.equal($(doc, "w-c").classList.contains("err"), true);
+    assert.equal(text(doc, "o-p0"), BASE.priceToday, "last good value survives");
+  });
 
   test("all three junked at once still leaves the page rendering", () => {
     const { win, doc, thrown } = open();

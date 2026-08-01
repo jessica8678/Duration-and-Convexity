@@ -47,7 +47,7 @@ Load-bearing. Breaking any of these is a regression, not a variation.
 
 | # | Decision | Why |
 |---|---|---|
-| D1 | Four tabs: the function → duration → convexity → validation | Each tab is one Taylor term plus a proof that they reconcile. Complexity unlocks in the reader's own order. |
+| D1 | Four tabs: the function → duration → convexity → validation | Each tab is one Taylor term plus a proof that they reconcile. Depth unlocks in the reader's own order. |
 | D2 | Tab 0 leads with the expansion and a convergence table (0/1/2/3 terms, and what each is still off by) | Makes "each correction is smaller than the last" a thing the reader watches happen, not a claim. |
 | D3 | Derivations live in collapsed drawers, one per tab | The main column stays a spine; depth is opt-in. A reader who wants the algebra can have all of it without it being imposed on one who does not. |
 | D4 | The same cash-flow table appears on tabs 1 and 2; the second derivative adds one column | The two numbers come from one object. Showing one table twice makes that structural, rather than asserting it. |
@@ -105,9 +105,14 @@ ever prove the two copies agree with each other.
 - [ ] All four tabs switch, exactly one panel visible; arrow keys move and wrap.
 - [ ] All three drawers open and close.
 - [ ] Junk in any input throws nothing, flags the field, and keeps the last good
-      value. Note that `parseFloat` prefix-parses: `5%` and `5..0` are read as `5`
-      and accepted. That is current behaviour, not a decision.
+      value. Input parsing is **tightened**: a value must match
+      `/^\s*\d*\.?\d+\s*%?\s*$/` before `parseFloat` sees it, so `5%` is accepted
+      while `5abc`, `5..0`, `0x10` and `1e9` are rejected. Bare `parseFloat`
+      prefix-parsed all of those into a number.
 - [ ] No banner after load; `#wrap` has lost `no-js`.
+- [ ] When init throws, the banner **survives**, gains `bad`, shows the error
+      message, and `#wrap` keeps `no-js`. This is the one state D10 exists for,
+      and the suite injects a fault to prove it.
 
 ---
 
@@ -134,7 +139,9 @@ head -c 34000 duration-convexity-study.html | md5sum   # must match
 
 - The tracker's dwell timing uses `IntersectionObserver` against a middle band of
   the viewport. On a short viewport several blocks are in that band at once and
-  their times overlap. Treat dwell as ordinal, not absolute.
-- `parseFloat` leniency, as noted in §4.
+  their times overlap. Treat dwell as ordinal, not absolute. `IntersectionObserver`
+  also does not exist in jsdom, so the tracker cannot be exercised by the test
+  suite — only in a real browser.
+- Input parsing leniency is **fixed**, not a limitation: see §4.
 - Annual coupons only. Most real bonds pay twice a year; that changes the numbers
   but not one line of the structure.

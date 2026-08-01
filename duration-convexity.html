@@ -357,10 +357,13 @@ function syncSlider(){
   if(+sl.value<mn){sl.value=mn;}
   S.dy=+sl.value/10000;
 }
+/* parseFloat alone prefix-parses, so "5abc" and "5..0" would slip through as 5.
+   Shape-check first: digits, one optional point, an optional trailing percent. */
+var NUMERIC=/^\s*\d*\.?\d+\s*%?\s*$/;
 function readInputs(){
   function grab(id,w,lo,hi,sc,intOnly){
-    var raw=el(id).value.trim(),v=parseFloat(raw);
-    var bad=(raw===""||isNaN(v)||v<lo||v>hi||(intOnly&&v!==Math.round(v)));
+    var raw=el(id).value.trim(),v=NUMERIC.test(raw)?parseFloat(raw):NaN;
+    var bad=(isNaN(v)||v<lo||v>hi||(intOnly&&v!==Math.round(v)));
     el(w).classList.toggle("err",bad);
     return bad?null:v/sc;
   }

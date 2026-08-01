@@ -33,3 +33,5 @@ and shows the error. No banner means everything is live.
 | `SPEC.md` | Design invariants, decisions, and the numbers any change must still produce. |
 | `STUDY.md` | How to run a reader test and how to read the output. |
 | `test/baseline.test.js` | Checks the page against those numbers. `npm install && npm test`. |
+
+MIT licensed — see [LICENSE](LICENSE).

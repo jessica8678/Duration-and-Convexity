@@ -19,7 +19,18 @@ Current state as of this entry:
 
 Notes recorded rather than changed:
 
-- Inputs are parsed with `parseFloat`, which prefix-parses — `5%` and `5..0` are
-  accepted as `5`. Current behaviour, not a decision.
 - Tracker dwell times can overlap on short viewports, so they are ordinal rather
   than absolute.
+
+### Changed
+
+- **Input parsing tightened.** A value must now match
+  `/^\s*\d*\.?\d+\s*%?\s*$/` before `parseFloat` is applied. `5%` is still
+  accepted; `5abc`, `5..0`, `0x10` and `1e9` are now rejected and flag the field
+  instead of being silently prefix-parsed into a number.
+- **CI added.** `.github/workflows/test.yml` runs `npm ci && npm test` on push and
+  pull request, ubuntu-latest, node 22. No branch protection.
+- **MIT licence added**, referenced from the README.
+- **Tests: 26 → 34.** Three cover the tightened parsing; five cover the
+  initialisation-failure banner, which was specified but never exercised.
+- Study file regenerated against the changed main file, per SPEC §5.
