@@ -299,7 +299,9 @@ Out of scope for the current version:
 
 ## Project Status
 
-**Release candidate**
+**Version 1.0 Released**
+
+The first public release includes four guided learning modules and an interactive Playground for scenario analysis, approximation validation, and full repricing comparison.
 
 The product is functionally structured for public release. Final publication should follow successful browser-based release acceptance testing, screenshot review, and confirmation that no internal or confidential information is included.
 
