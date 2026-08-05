@@ -29,7 +29,7 @@ After GitHub Pages is enabled, add the public demo link here:
 
 ## Product Preview
 
-Add final screenshots to the `assets/` folder and keep the following file names:
+Add final screenshots to the `Assets/` folder and keep the following file names:
 
 ### Learning Modules
 
