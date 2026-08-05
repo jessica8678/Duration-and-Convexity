@@ -33,11 +33,11 @@ Add final screenshots to the `Assets/` folder and keep the following file names:
 
 ### Learning Modules
 
-![Duration and Convexity learning module](assets/learning-module.png)
+![Duration and Convexity learning module](Assets/learning-module.png)
 
 ### Playground
 
-![Duration and Convexity Playground](assets/playground.png)
+![Duration and Convexity Playground](Assets/playground.png)
 
 ## Target Users
 
@@ -184,7 +184,7 @@ Duration-and-Convexity/
 ├── SPEC.md                        # Design and calculation invariants
 ├── STUDY.md                       # Reader-testing guidance
 ├── LICENSE                        # Repository license
-├── assets/
+├── Assets/
 │   ├── learning-module.png        # Learning-module screenshot
 │   └── playground.png             # Playground screenshot
 └── test/
