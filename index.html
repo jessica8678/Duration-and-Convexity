@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Duration & Convexity Lab · Playground</title>
+<style>
+:root{--bg:#F7F9FC;--card:#FFFFFF;--rule:#C6D2DF;--ink:#0E1A2B;--ink2:#4A5B74;--ink3:#8494A8;
+--first:#1B54D6;--second:#6B3FA0;--resid:#8494A8;--gain:#0E7C5A;--loss:#B4243C}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+font:15px/1.55 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.num,table,.eq,.out,.chain{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+font-variant-numeric:tabular-nums}
+.wrap{max-width:900px;margin:0 auto;padding:26px 20px 70px}
+h1{font-size:27px;line-height:1.25;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--ink2);margin:0 0 18px;font-size:14px}
+#jswarn{background:#FAF3DC;border:1px solid #E3CE8F;border-radius:10px;padding:10px 14px;
+margin:0 0 16px;font-size:13px;color:#6B5A1E}
+#jswarn.bad{background:#FBEAEA;border-color:#E0A0A0;color:#8A2B2B}
+.inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 10px}
+.inp{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:9px 12px}
+.inp label{display:block;font-size:11px;color:var(--ink3);letter-spacing:.04em;
+text-transform:uppercase;margin-bottom:3px}
+.inp input{width:100%;border:0;outline:0;background:transparent;color:var(--ink);
+font:17px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;padding:0}
+.inp.err{border-color:#E0A0A0;background:#FDF6F6}
+.blotter{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);
+border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin:0 0 18px}
+.bl{background:var(--card);padding:9px 12px}
+.bl .k{font-size:11px;color:var(--ink3);letter-spacing:.04em;text-transform:uppercase}
+.bl .v{font:16px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;margin-top:2px}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--rule);margin:0 0 16px}
+.tab{appearance:none;border:0;background:transparent;padding:9px 14px;font-size:14px;
+color:var(--ink2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--ink);font-weight:600}
+.tab:focus-visible{outline:2px solid var(--first);outline-offset:-2px}
+/* the slider is the chart's x-axis control, so it shares the chart's box and
+   its track is inset to the plot area: x=56..838 of a 860-wide viewBox. */
+.ctl{background:var(--card);border:1px solid var(--rule);border-bottom:0;
+border-radius:10px 10px 0 0;padding:11px 6px 8px;margin:0}
+.ctl-head{display:flex;justify-content:space-between;align-items:baseline;
+margin:0 0 8px;padding:0 calc(2.558% + 2px) 0 calc(6.512% + 2px)}
+.ctl label{font-size:12px;color:var(--ink3);letter-spacing:.04em;text-transform:uppercase;
+white-space:nowrap}
+.ctl-track{margin-left:calc(6.512% - 8px);margin-right:calc(2.558% - 8px)}
+.ctl-track input[type=range]{display:block;width:100%;margin:0;accent-color:var(--ink)}
+.out{font-size:15px;text-align:right}
+.out .y{color:var(--ink3)}
+.chart{background:var(--card);border:1px solid var(--rule);border-radius:0 0 10px 10px;
+padding:2px 6px 4px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--ink2);margin:8px 2px 22px}
+.swatch{display:inline-block;width:11px;height:3px;border-radius:2px;margin-right:6px;
+vertical-align:middle}
+.swatch.area{height:10px;border-radius:2px}
+.no-js .chart{display:none}
+.eq{padding:13px 0;margin:14px 0 0;font-size:15px;overflow-x:auto;white-space:nowrap}
+.lead + .eq{margin-top:8px} .eq + .lead{margin-top:22px}
+.lead{font-size:15px;color:var(--ink2);margin:0 0 12px}
+.lead b{color:var(--ink)}
+.note{color:var(--ink2);font-size:14px;margin:10px 0 0}
+.mets{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0 0}
+.met{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:10px 13px}
+.met .k{font-size:11px;color:var(--ink3);letter-spacing:.04em;text-transform:uppercase}
+.met .v{font:19px ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;margin-top:3px}
+.fr .lab{display:block;font-style:normal;font-size:10px;letter-spacing:.05em;
+text-transform:uppercase;color:var(--ink3);font-family:ui-sans-serif,-apple-system,sans-serif;
+margin-top:2px}
+.nm{font-weight:600;color:var(--ink);letter-spacing:.01em}
+.nm2{font-weight:600;color:var(--first);letter-spacing:.01em}
+.nm3{font-weight:600;color:var(--second);letter-spacing:.01em}
+.t1{color:var(--first)} .t2{color:var(--second)} .t3{color:var(--resid)}
+/* stacked fraction */
+.fr{display:inline-block;vertical-align:-0.55em;text-align:center;margin:0 5px}
+.fr .n{display:block;padding:0 7px 2px}
+.fr .d{display:block;border-top:1px solid currentColor;padding:2px 7px 0}
+/* number chain */
+.chain{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card);
+border:1px solid var(--rule);border-radius:10px;padding:13px 15px;margin-top:12px;font-size:14px}
+.chain .box{padding:5px 11px;border-radius:7px;background:#F2F5FA;border:1px solid var(--rule)}
+.chain .box.hi1{background:#EEF3FC;border-color:#B9CCF0;color:var(--first)}
+.chain .box.hi2{background:#F3EFF8;border-color:#CBBBDF;color:var(--second)}
+.chain .op{color:var(--ink3);font-size:12px;font-family:ui-sans-serif,-apple-system,sans-serif}
+.recall{background:#F2F5FA;border:1px solid var(--rule);border-radius:10px;padding:11px 15px;
+font-size:14px;overflow-x:auto;white-space:nowrap;
+font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+.recall .lbl{font-family:ui-sans-serif,-apple-system,sans-serif;font-size:11px;color:var(--ink3);
+letter-spacing:.04em;text-transform:uppercase;margin-right:14px}
+.recall .dim{color:#AEBAC8}
+.handoff{color:var(--ink2);font-size:14px;margin:10px 0 14px}
+.handoff b{color:var(--ink)}
+details{background:var(--card);border:1px solid var(--rule);border-radius:10px;margin:12px 0 0}
+details summary{cursor:pointer;padding:10px 14px;font-size:13px;color:var(--first);
+list-style:none;user-select:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"\25B8";display:inline-block;margin-right:8px;transition:transform .12s}
+details[open] summary::before{transform:rotate(90deg)}
+details .body{padding:6px 16px 16px;font-size:14px;color:var(--ink2);border-top:1px solid var(--rule)}
+details .body .l{font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;
+color:var(--ink);margin:13px 0 0;overflow-x:auto;white-space:nowrap;font-size:14px}
+details .body .why{margin:11px 0 0;font-size:13px}
+details .body .lvl{display:grid;grid-template-columns:96px 1fr;gap:10px;margin:11px 0 0;
+align-items:baseline}
+details .body .lvl .tag{font-size:11px;color:var(--ink3);letter-spacing:.04em;text-transform:uppercase}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:13px;background:var(--card);
+border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+th,td{padding:6px 11px;text-align:right;border-bottom:1px solid rgba(198,210,223,.55);white-space:nowrap}
+th{font-size:11px;color:var(--ink3);letter-spacing:.03em;text-transform:uppercase;font-weight:500;
+background:rgba(198,210,223,.16)}
+th:first-child,td:first-child{text-align:left}
+th.new{color:var(--first);background:#EEF3FC}
+th.new2{color:var(--second);background:#F3EFF8}
+tbody tr.zero td{color:var(--ink3)}
+tbody tr:hover td{background:#EEF3FC}
+tfoot td{border-top:1px solid var(--ink);border-bottom:0;font-weight:600;background:var(--card)}
+caption{caption-side:top;text-align:left;font-size:12.5px;color:var(--ink2);padding:0 0 7px}
+.assume{margin-top:34px;padding-top:15px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink3)}
+.assume ul{margin:7px 0 0;padding-left:19px}
+@media (max-width:640px){
+.wrap{padding:18px 14px 50px} h1{font-size:22px}
+.inputs{grid-template-columns:1fr 1fr} .blotter{grid-template-columns:1fr 1fr}
+.tab{padding:8px 10px;font-size:13px} .eq{font-size:13px} .out{font-size:13px}
+.chain{font-size:13px;gap:8px}}
+
+.tab{min-height:58px;line-height:1.2}
+.tab .tabcue{display:block;margin-top:4px;font:11px/1.25 ui-sans-serif,-apple-system,"Segoe UI",sans-serif;color:var(--ink3);font-weight:500;white-space:normal}
+.tab[aria-selected="true"] .tabcue{color:inherit;opacity:.88}
+.tab-formula-hint{min-height:24px;padding:5px 12px 7px;text-align:center;color:var(--ink2);font-size:12px;border-bottom:1px solid var(--rule)}
+.tab-formula-hint .mini-eq{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink);font-weight:600}
+#cv{touch-action:none;user-select:none}
+#cv.dragging{cursor:grabbing}
+#drag-handle{cursor:grab}
+.point-label{paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+.drag-hint{font:11px ui-sans-serif,-apple-system,"Segoe UI",sans-serif;fill:var(--ink3)}
+
+/* Validation decision UI */
+.vcard{background:var(--card);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-top:12px}
+.vhead{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;padding:13px 16px 10px;border-bottom:1px solid var(--rule)}
+.vhead b{font-size:14px}.vshock{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink2)}
+.vgroup{padding:8px 16px 5px;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);background:#F9FAFC}
+.vcard table{border:0;border-radius:0}.vcard .v-est td{background:#F3EFF8;border-top:1px solid #CBBBDF;color:var(--second);font-weight:600}
+.vcard .v-res td{background:#FAFBFD;color:var(--resid)}
+.vsub{display:block;font:10px/1.3 ui-sans-serif,-apple-system,"Segoe UI",sans-serif;color:var(--ink3);margin-top:2px}
+.vmetrics{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);border-top:1px solid var(--rule)}
+.vmetric{background:var(--card);padding:11px 15px}.vmetric .k{font-size:10px;color:var(--ink3);letter-spacing:.05em;text-transform:uppercase}
+.vmetric .v{font:17px ui-monospace,SFMono-Regular,Menlo,monospace;margin-top:2px}.vmetric .n{font-size:11px;color:var(--ink2);margin-top:2px}
+.vguide{margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:11px;align-items:start;background:#FFF8E8;border:1px solid #E6C66A;border-radius:10px;padding:11px 13px;color:#6A5417;font-size:13px}
+.vbadge{white-space:nowrap;font-size:10px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;border:1px solid #E6C66A;border-radius:999px;padding:3px 7px;background:#FFFDF7}
+.vguide p{margin:0}.vguide b{color:#4E3D0F}
+@media(max-width:640px){.vmetrics{grid-template-columns:1fr}.vguide{grid-template-columns:1fr}.vhead{align-items:flex-start;flex-direction:column}}
+
+/* Module 5 Playground */
+.m5-launch{margin:30px 0 0;padding:18px;border:1px solid #B9CCF0;background:linear-gradient(135deg,#F7FAFF,#F6F1FF);border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.m5-launch h2{margin:0 0 4px;font-size:20px}.m5-launch p{margin:0;color:var(--ink2);font-size:13px}.m5-primary{border:0;border-radius:9px;background:linear-gradient(135deg,#315FD4,#6B3FA0);color:white;font-weight:700;padding:11px 18px;cursor:pointer;white-space:nowrap}
+#m5{margin-top:34px;background:#F7F9FC;border:1px solid var(--rule);border-radius:16px;overflow:hidden;scroll-margin-top:15px}
+.m5-shell{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:820px}.m5-side{background:#FAFBFE;border-right:1px solid var(--rule);padding:20px 14px;display:flex;flex-direction:column}.m5-brand{font-weight:800;font-size:16px;line-height:1.2;padding:4px 8px 18px;border-bottom:1px solid var(--rule)}.m5-brand small{display:block;color:var(--first);font-weight:500;margin-top:5px}.m5-nav{display:grid;gap:7px;margin-top:16px}.m5-nav div{padding:10px;border-radius:8px;color:var(--ink2);font-size:12px}.m5-nav b{display:block;color:var(--ink);font-size:13px}.m5-nav .active{background:linear-gradient(135deg,#315FD4,#1B54D6);color:white}.m5-nav .active b{color:white}.m5-goal{margin-top:auto;border:1px solid #C9D7EA;border-radius:10px;background:#F5F9FF;padding:11px;font-size:11px;color:var(--ink2)}.m5-goal b{display:block;color:var(--first);margin-bottom:5px}
+.m5-main{padding:20px}.m5-head{display:flex;justify-content:space-between;gap:20px;align-items:start;margin-bottom:16px}.m5-head h2{font-size:27px;margin:0}.m5-head p{margin:3px 0;color:var(--ink2);font-size:13px}.m5-guide{border:1px solid #B9CCF0;background:#F7FAFF;border-radius:8px;padding:7px 11px;color:var(--first);font-size:12px}
+.m5-top{display:grid;grid-template-columns:1fr 1fr 1.18fr;gap:10px}.m5-card{background:white;border:1px solid var(--rule);border-radius:11px;overflow:hidden}.m5-card-h{padding:10px 13px;background:#F3F6FC;color:var(--first);font-weight:750;font-size:13px}.m5-card-h.green{background:#F1F8F3;color:#287A38}.m5-card-h.purple{background:#F6F2FC;color:var(--second)}.m5-body{padding:13px}.m5-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.m5-field label{display:block;font-size:11px;font-weight:650;margin-bottom:5px}.m5-value{display:flex;align-items:center;justify-content:space-between;gap:8px}.m5-value input[type=number]{width:72px;border:1px solid var(--rule);border-radius:6px;padding:6px 7px;font:14px ui-monospace,monospace}.m5-field input[type=range]{width:100%;accent-color:var(--first);margin-top:7px}.m5-scale{display:flex;justify-content:space-between;color:var(--ink3);font-size:9px}.m5-presets,.m5-shocks{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:14px}.m5-chip{border:1px solid var(--rule);background:white;border-radius:7px;padding:7px 4px;font-size:10px;cursor:pointer}.m5-chip.on{border-color:var(--first);background:#EEF3FC;color:var(--first);font-weight:700}.m5-yields{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.m5-yield strong{display:block;font:16px ui-monospace,monospace}.m5-yield small{font-size:10px;color:var(--ink3)}.m5-arrow{font-size:21px}.m5-shockline{text-align:right;margin:7px 0 4px;font:700 14px ui-monospace,monospace;color:var(--gain)}
+.m5-q{font-size:12px;font-weight:650;margin:0 0 8px}.m5-choice{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}.m5-choice.three{grid-template-columns:repeat(3,1fr)}.m5-choice button{border:1px solid var(--rule);background:white;border-radius:7px;padding:9px 4px;cursor:pointer;font-size:11px}.m5-choice button.selected{border-color:#9D75CB;background:#F6F1FC;color:var(--second);font-weight:700}.m5-run{width:100%;border:0;border-radius:8px;padding:11px;background:linear-gradient(135deg,#6B3FA0,#7E2FD0);color:white;font-weight:750;cursor:pointer}
+.m5-results{display:grid;grid-template-columns:1.18fr 1fr;gap:10px;margin-top:10px}.m5-chartbox{grid-row:span 2}.m5-chart{padding:8px 10px 2px}.m5-chart svg{width:100%;height:250px;display:block}.m5-legend{font-size:10px;color:var(--ink2);display:flex;justify-content:center;gap:14px}.m5-summary{margin:0 12px 12px;padding:8px 10px;border:1px solid #C7D6E8;border-radius:7px;background:#F8FAFD;display:flex;justify-content:space-between;font:11px ui-monospace,monospace}.m5-break{display:grid;grid-template-columns:.92fr 1.08fr;gap:10px;align-items:end}.m5-lines{display:grid;gap:8px;font-size:11px}.m5-line{display:flex;justify-content:space-between;gap:8px}.m5-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px}.m5-bars{height:116px;display:flex;align-items:end;gap:13px;border-bottom:1px solid var(--rule);padding:8px 5px 0}.m5-bar-wrap{flex:1;text-align:center;font-size:9px;color:var(--ink2)}.m5-bar{min-height:2px;border-radius:3px 3px 0 0;margin:0 auto 4px;width:65%;position:relative}.m5-bar em{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-style:normal;font:9px ui-monospace,monospace;color:var(--ink)}
+.m5-approx{display:grid;grid-template-columns:1fr .9fr;gap:16px;font-size:11px}.m5-ap-lines{display:grid;gap:10px}.m5-ap-row{display:grid;grid-template-columns:1fr auto;gap:8px}.m5-error{display:grid;gap:10px}.m5-errrow{display:grid;grid-template-columns:35px 1fr;gap:6px;align-items:center}.m5-errbar{height:9px;border-radius:5px;background:#E8EDF5;overflow:hidden}.m5-errbar i{display:block;height:100%;background:var(--first)}
+.m5-discovery{grid-column:1/-1;display:grid;grid-template-columns:1fr 180px 150px;gap:12px;align-items:stretch}.m5-insight{padding:13px 16px}.m5-insight h3{margin:0 0 6px;color:var(--first);font-size:14px}.m5-insight p{margin:3px 0;font-size:11px;color:var(--ink2)}.m5-action{padding:13px;border-left:1px solid var(--rule);font-size:11px}.m5-action b{display:block;color:var(--first);font-size:12px;margin-bottom:5px}.m5-action button{width:100%;margin-top:10px;border:1px solid #B9CCF0;background:#F7FAFF;color:var(--first);border-radius:7px;padding:7px;cursor:pointer}
+.m5-hidden{display:none}.m5-fade{animation:m5in .45s ease both}@keyframes m5in{from{opacity:.15;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(max-width:900px){.m5-shell{grid-template-columns:1fr}.m5-side{display:none}.m5-top{grid-template-columns:1fr 1fr}.m5-top .m5-card:last-child{grid-column:1/-1}.m5-results{grid-template-columns:1fr}.m5-chartbox{grid-row:auto}.m5-discovery{grid-template-columns:1fr}.m5-action{border-left:0;border-top:1px solid var(--rule)}}
+@media(max-width:640px){.m5-launch{align-items:flex-start;flex-direction:column}.m5-main{padding:12px}.m5-head h2{font-size:22px}.m5-guide{display:none}.m5-top{grid-template-columns:1fr}.m5-top .m5-card:last-child{grid-column:auto}.m5-two,.m5-break,.m5-approx{grid-template-columns:1fr}.m5-summary{flex-direction:column;gap:4px}}
+
+
+/* Unified application shell and navigation */
+body{overflow-x:hidden}
+.app-shell{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh;background:#F7F9FC}
+.app-sidebar{position:sticky;top:0;height:100vh;background:#FBFCFF;border-right:1px solid #D8E1EC;display:flex;flex-direction:column;z-index:20;box-shadow:3px 0 14px rgba(22,52,92,.025)}
+.app-brand{min-height:112px;padding:22px 22px 18px;border-bottom:1px solid #D8E1EC;display:flex;gap:13px;align-items:center}
+.app-brand-icon{width:43px;height:43px;flex:0 0 43px}
+.app-brand-title{font-size:19px;line-height:1.06;font-weight:800;color:#0E1A2B;letter-spacing:-.02em}
+.app-brand-sub{font-size:11px;color:#1B54D6;margin-top:7px;white-space:nowrap}
+.app-nav{padding:18px 11px;display:grid;gap:8px}
+.app-nav-btn{appearance:none;width:100%;border:0;background:transparent;border-radius:9px;padding:11px 12px;display:grid;grid-template-columns:35px 1fr;gap:10px;align-items:center;text-align:left;color:#0E1A2B;cursor:pointer;transition:background .15s,color .15s,transform .15s;min-height:62px}
+.app-nav-btn:hover{background:#EEF3FC}.app-nav-btn:focus-visible{outline:2px solid #1B54D6;outline-offset:2px}
+.app-nav-num{width:32px;height:34px;border-radius:7px;background:#E8EFFB;color:#1B54D6;display:grid;place-items:center;font-size:16px;font-weight:800}
+.app-nav-copy b{display:block;font-size:13px;line-height:1.2;margin-bottom:3px}.app-nav-copy span{display:block;font-size:11px;line-height:1.25;color:#4A5B74}
+.app-nav-btn.active{background:linear-gradient(135deg,#315FD4,#1760E6);color:white;box-shadow:0 6px 14px rgba(27,84,214,.20)}
+.app-nav-btn.active .app-nav-num{background:rgba(255,255,255,.18);color:white}.app-nav-btn.active .app-nav-copy span{color:#E9F1FF}
+.app-goal{margin:auto 12px 14px;border:1px solid #C9D8ED;border-radius:12px;background:linear-gradient(145deg,#F8FBFF,#F1F6FD);padding:15px 14px;color:#273B59;font-size:11px;line-height:1.45;min-height:188px}
+.app-goal-title{display:flex;align-items:center;gap:8px;color:#1B54D6;font-weight:800;font-size:12px;margin-bottom:11px}.app-goal-icon{font-size:19px}
+.app-content{min-width:0;padding:0}.app-content>.wrap{max-width:1160px;margin:0 auto;padding:26px 26px 70px}
+/* the new left rail replaces the original horizontal tabs and Module 5 duplicate rail */
+.app-content .tabs{display:none}.app-content #m5{margin-top:20px}.app-content #m5 .m5-shell{display:block;min-height:0}.app-content #m5 .m5-side{display:none}.app-content #m5 .m5-main{padding:20px}
+.app-module-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#1B54D6;font-weight:800;margin-bottom:5px}
+.app-home-title{display:flex;justify-content:space-between;gap:15px;align-items:start;margin-bottom:16px}.app-home-title h1{margin-bottom:2px}
+.app-mobile-nav{display:none}
+@media(max-width:900px){
+ .app-shell{grid-template-columns:1fr}.app-sidebar{position:relative;height:auto;display:block;border-right:0;border-bottom:1px solid #D8E1EC}.app-brand{min-height:auto;padding:14px 18px}.app-brand-icon{width:36px;height:36px;flex-basis:36px}.app-brand-title{font-size:17px}.app-goal{display:none}.app-nav{display:flex;overflow-x:auto;padding:10px 12px;gap:7px}.app-nav-btn{min-width:150px;min-height:54px;padding:8px;grid-template-columns:30px 1fr}.app-nav-num{width:28px;height:30px;font-size:13px}.app-content>.wrap{padding:18px 14px 50px}
+}
+@media(max-width:560px){.app-nav-btn{min-width:126px}.app-nav-copy b{font-size:11px}.app-nav-copy span{font-size:9px}.app-brand-sub{white-space:normal}}
+
+
+/* Separate page states and richer UI palette */
+:root{
+ --ui-blue:#1B54D6;--ui-blue2:#1769E8;--ui-blue-soft:#EAF1FF;
+ --ui-purple:#6B3FA0;--ui-purple2:#8B5DC4;--ui-purple-soft:#F4EEFC;
+ --ui-green:#16835D;--ui-green-soft:#EAF8F2;--ui-amber:#D99100;--ui-amber-soft:#FFF6DF;
+}
+/* True page separation: Playground never sits below Modules 1-4 */
+#wrap.playground-page>h1,#wrap.playground-page>.sub,#wrap.playground-page>#jswarn,
+#wrap.playground-page>.inputs,#wrap.playground-page>.blotter,#wrap.playground-page>.tabs,
+#wrap.playground-page>.tab-formula-hint,#wrap.playground-page>.ctl,#wrap.playground-page>.chart,
+#wrap.playground-page>.legend,#wrap.playground-page>#p0,#wrap.playground-page>#p1,
+#wrap.playground-page>#p2,#wrap.playground-page>#p3,#wrap.playground-page>.assume,
+#wrap.playground-page>.m5-launch{display:none!important}
+#wrap.playground-page{max-width:none;padding:0;background:linear-gradient(145deg,#F8FAFF 0%,#F7F8FC 50%,#FAF7FF 100%);min-height:100vh}
+#wrap.playground-page>#m5{display:block!important;margin:0;border:0;border-radius:0;background:transparent;min-height:100vh}
+#wrap.learning-page>#m5{display:none!important}
+/* Richer content canvas */
+.app-content{background:radial-gradient(circle at 85% 2%,rgba(107,63,160,.08),transparent 24%),radial-gradient(circle at 8% 0%,rgba(27,84,214,.07),transparent 22%),#F7F9FC}
+.app-sidebar{background:linear-gradient(180deg,#FCFDFF 0%,#F7F9FE 62%,#F4F7FC 100%)}
+.app-brand{background:linear-gradient(140deg,#FFFFFF 0%,#F4F7FF 100%)}
+.app-brand-icon{filter:drop-shadow(0 3px 5px rgba(27,84,214,.14))}
+.app-nav-btn:nth-child(1) .app-nav-num{background:#EAF1FF;color:#1B54D6}
+.app-nav-btn:nth-child(2) .app-nav-num{background:#EEF1FF;color:#4056C8}
+.app-nav-btn:nth-child(3) .app-nav-num{background:#F4EEFC;color:#6B3FA0}
+.app-nav-btn:nth-child(4) .app-nav-num{background:#FFF3E3;color:#B76B00}
+.app-nav-btn:nth-child(5) .app-nav-num{background:#EAF8F2;color:#16835D}
+.app-nav-btn.active{background:linear-gradient(135deg,#294FC6 0%,#1769E8 56%,#7254C7 100%);box-shadow:0 9px 20px rgba(35,82,193,.23)}
+.app-nav-btn.active .app-nav-num{background:rgba(255,255,255,.18);color:#fff}
+.app-goal{background:linear-gradient(150deg,#F6FAFF,#EEF4FF 55%,#F7F2FF);border-color:#C9D7F2;box-shadow:0 8px 20px rgba(46,83,137,.06)}
+/* Learning modules: lift existing cards without changing content */
+.learning-page .inp,.learning-page .bl,.learning-page .chart,.learning-page .met,
+.learning-page details,.learning-page .chain,.learning-page .vcard{box-shadow:0 5px 15px rgba(27,54,89,.045)}
+.learning-page .ctl{background:linear-gradient(90deg,#F7FAFF,#FBF8FF)}
+.learning-page .tab-formula-hint{background:linear-gradient(90deg,#EDF3FF,#F7F1FC);color:#314A6B}
+/* Playground hero and cards */
+#m5 .m5-main{max-width:1280px;margin:0 auto;padding:26px 28px 44px}
+#m5 .m5-head{padding:20px 22px;border:1px solid #D8E2F3;border-radius:15px;background:linear-gradient(120deg,#FFFFFF 0%,#F1F6FF 52%,#F7F0FD 100%);box-shadow:0 10px 26px rgba(40,73,126,.07);margin-bottom:15px}
+#m5 .m5-head h2{color:#102449;letter-spacing:-.025em}
+#m5 .m5-head p{color:#52657F}
+#m5 .m5-guide{background:#FFFFFF;border-color:#C8D7F1;box-shadow:0 3px 10px rgba(27,84,214,.08)}
+#m5 .m5-card{border-color:#D7E0EC;box-shadow:0 8px 22px rgba(28,55,91,.06);transition:transform .18s,box-shadow .18s}
+#m5 .m5-card:hover{transform:translateY(-1px);box-shadow:0 11px 27px rgba(28,55,91,.09)}
+#m5 .m5-card-h{background:linear-gradient(90deg,#EAF1FF,#F4F7FF);color:#164EBF;border-bottom:1px solid #D8E3F5}
+#m5 .m5-card-h.green{background:linear-gradient(90deg,#EAF8F2,#F3FBF7);color:#13734F;border-bottom-color:#CAE9DC}
+#m5 .m5-card-h.purple{background:linear-gradient(90deg,#F2EBFC,#FAF6FE);color:#67409B;border-bottom-color:#E2D5F1}
+#m5 .m5-top .m5-card:nth-child(3){background:linear-gradient(180deg,#FFFFFF,#FCFAFF)}
+#m5 .m5-chip{background:linear-gradient(180deg,#FFFFFF,#F7F9FC)}
+#m5 .m5-chip:hover{border-color:#9EB8EA;background:#EEF4FF}
+#m5 .m5-chip.on{background:linear-gradient(135deg,#EAF1FF,#F1EDFC);border-color:#6691E8;color:#174FBD;box-shadow:inset 0 0 0 1px rgba(27,84,214,.06)}
+#m5 .m5-choice button:hover{border-color:#A98BCB;background:#F8F3FC}
+#m5 .m5-choice button.selected{background:linear-gradient(135deg,#F1EAFB,#EDE9FF);border-color:#8C67BD;box-shadow:0 3px 9px rgba(107,63,160,.10)}
+#m5 .m5-run{background:linear-gradient(100deg,#245BCF,#5C48C5 55%,#7A35BB);box-shadow:0 8px 17px rgba(83,57,178,.22);letter-spacing:.01em}
+#m5 .m5-run:hover{filter:brightness(1.05)}
+#m5 .m5-summary{background:linear-gradient(90deg,#F1F6FF,#F7F2FC);border-color:#CDD9EE}
+#m5 .m5-discovery{background:linear-gradient(110deg,#FFFDF7,#FFF8E8 40%,#F7FBFF);border-color:#E8D6A9}
+#m5 .m5-insight h3{color:#A56700}
+#m5 .m5-action button{background:linear-gradient(180deg,#FFFFFF,#EEF4FF)}
+@media(max-width:900px){#m5 .m5-main{padding:16px 14px 36px}#wrap.playground-page{min-height:auto}}
+
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+<aside class="app-sidebar" aria-label="Duration and Convexity Lab navigation">
+ <div class="app-brand">
+  <svg class="app-brand-icon" viewBox="0 0 52 52" aria-hidden="true">
+   <path d="M7 43V9M7 43H47" fill="none" stroke="#1B54D6" stroke-width="2" stroke-linecap="round"/>
+   <path d="M10 37C17 34 18 18 24 25S31 37 45 14" fill="none" stroke="#1B54D6" stroke-width="2.4" stroke-linecap="round"/>
+   <path d="M11 42C19 39 28 36 45 31" fill="none" stroke="#89A9E8" stroke-width="1.5" stroke-dasharray="3 3"/>
+   <circle cx="24" cy="25" r="2.5" fill="#1B54D6"/><circle cx="45" cy="14" r="2.5" fill="#1B54D6"/>
+  </svg>
+  <div><div class="app-brand-title">Duration &amp;<br>Convexity Lab</div><div class="app-brand-sub">Learn. Visualize. Apply.</div></div>
+ </div>
+ <nav class="app-nav" aria-label="Learning modules">
+  <button class="app-nav-btn active" type="button" data-module="0"><span class="app-nav-num">1</span><span class="app-nav-copy"><b>Bond Price vs Yield</b><span>See the relationship</span></span></button>
+  <button class="app-nav-btn" type="button" data-module="1"><span class="app-nav-num">2</span><span class="app-nav-copy"><b>Duration</b><span>First-order effect</span></span></button>
+  <button class="app-nav-btn" type="button" data-module="2"><span class="app-nav-num">3</span><span class="app-nav-copy"><b>Convexity</b><span>Second-order effect</span></span></button>
+  <button class="app-nav-btn" type="button" data-module="3"><span class="app-nav-num">4</span><span class="app-nav-copy"><b>Taylor Expansion</b><span>Validate the approximation</span></span></button>
+  <button class="app-nav-btn" type="button" data-module="4"><span class="app-nav-num">5</span><span class="app-nav-copy"><b>Playground</b><span>Apply what you learned</span></span></button>
+ </nav>
+ <div class="app-goal"><div class="app-goal-title"><span class="app-goal-icon">♧</span>Learning Goal</div>Understand how interest-rate moves affect bond prices, and how Duration and Convexity explain the change.</div>
+</aside>
+<main class="app-content">
+<div class="wrap no-js" id="wrap">
+
+
+<h1>Duration and Convexity</h1>
+
+
+<div id="jswarn"><b>Static preview.</b> Download this file and open it to use the controls.</div>
+
+
+<div class="inputs">
+<div class="inp" id="w-c"><label for="i-c">Coupon rate</label><input id="i-c" type="text" inputmode="decimal" value="5.00"></div>
+<div class="inp" id="w-T"><label for="i-T">Years to maturity</label><input id="i-T" type="text" inputmode="numeric" value="10"></div>
+<div class="inp" id="w-y"><label for="i-y">Interest rate today</label><input id="i-y" type="text" inputmode="decimal" value="5.00"></div>
+</div>
+
+
+<div class="blotter">
+<div class="bl"><div class="k">Price today</div><div class="v" id="o-p0"></div></div>
+<div class="bl"><div class="k">Price now</div><div class="v" id="o-p"></div></div>
+<div class="bl"><div class="k">Change</div><div class="v" id="o-d"></div></div>
+</div>
+
+
+<div class="tabs" role="tablist">
+<button class="tab" role="tab" id="tb0" aria-selected="true">0 &nbsp;The function<span class="tabcue">Price moves when the rate moves</span></button>
+<button class="tab" role="tab" id="tb1" aria-selected="false">1 &nbsp;Duration<span class="tabcue">The straight-line effect</span></button>
+<button class="tab" role="tab" id="tb2" aria-selected="false">2 &nbsp;Convexity<span class="tabcue">The curvature correction</span></button>
+<button class="tab" role="tab" id="tb3" aria-selected="false">3 &nbsp;Validation<span class="tabcue">Do the pieces explain the price?</span></button>
+</div>
+<div class="tab-formula-hint" id="tabhint" aria-live="polite"></div>
+
+<div class="ctl">
+<div class="ctl-head"><span class="out" id="slout"></span></div>
+<div class="ctl-track"><input id="sl" type="range" min="-700" max="700" step="10" value="100"></div>
+</div>
+
+
+<div class="chart"><svg id="cv" viewBox="0 0 860 300" width="100%" role="img"><title>Price against the interest rate</title></svg></div>
+<div class="legend" id="lg"></div>
+
+
+<section id="p0" role="tabpanel">
+<p class="lead"><b>First, the fact.</b> Raise the rate and the price falls &mdash; later payments are divided more times, so they give up more. Not proportionally: the curve <b>bends</b>.</p>
+<div class="eq" id="eq-p"></div>
+<p class="lead"><b>Second, the tool.</b> On a bent curve, getting from one point to another takes a series of corrections, each smaller than the last. That series is called the <b>Taylor expansion</b>. Above: flat, sloped, bent &mdash; the third rides the black curve so closely that only the extremes separate them.</p>
+<div class="eq">P(r+&Delta;r) &nbsp;=&nbsp; P(r) &nbsp;+&nbsp; <span class="t1">P&prime;(r)&thinsp;&Delta;r</span> &nbsp;+&nbsp; <span class="t2"><span class="fr"><span class="n">1</span><span class="d">2</span></span>P&Prime;(r)&thinsp;&Delta;r&sup2;</span> &nbsp;+&nbsp; <span class="t3"><span class="fr"><span class="n">1</span><span class="d">6</span></span>P&#8244;(r)&thinsp;&Delta;r&sup3;</span> &nbsp;+&nbsp; &hellip;</div>
+<p class="note">Tab 1 is the first correction. Tab 2 is the second.</p>
+
+
+<details><summary>Show the derivation</summary><div class="body">
+<div class="why">Build the answer one correction at a time. Each level removes the error the level above it left behind.</div>
+<div class="lvl"><span class="tag">Guess 0</span><span class="l" style="margin:0">P(r+&Delta;r) &asymp; P(r)</span></div>
+<div class="why">Assume the price does not move at all. The error is the entire change.</div>
+<div class="lvl"><span class="tag">Guess 1</span><span class="l" style="margin:0">&hellip; + P&prime;(r)&thinsp;&Delta;r</span></div>
+<div class="why">At the point where you start, the price changes at rate P&prime;. Apply that rate across the whole distance &Delta;r. What is left over is caused by P&prime; not holding still along the way.</div>
+<div class="lvl"><span class="tag">Guess 2</span><span class="l" style="margin:0">&hellip; + <span class="fr"><span class="n">1</span><span class="d">2</span></span>P&Prime;(r)&thinsp;&Delta;r&sup2;</span></div>
+<div class="why">P&prime; does not hold still &mdash; it changes at rate P&Prime;. This term corrects for exactly that. The <span class="num">&frac12;</span> is <span class="num">1/2!</span>, and the paragraph at the bottom says where it comes from.</div>
+<div class="lvl"><span class="tag">Guess n</span><span class="l" style="margin:0">&hellip; + <span class="fr"><span class="n">1</span><span class="d">n!</span></span>P<sup>(n)</sup>(r)&thinsp;&Delta;r<sup>n</sup></span></div>
+<div class="why">Each level costs one more derivative and one more power of &Delta;r. Because &Delta;r is small, &Delta;r<sup>n</sup> shrinks quickly, so the list can be cut short without much loss.</div>
+<div class="why" style="margin-top:14px"><b>Where n! comes from.</b> Every time you differentiate a power, the exponent drops in front as a factor and the power goes down by one. Do it n times and those factors multiply up:</div><div class="l"><span class="fr"><span class="n">d</span><span class="d">d&Delta;r</span></span> &nbsp;&Delta;r<sup>n</sup> &nbsp;=&nbsp; <b>n</b>&thinsp;&Delta;r<sup>n&minus;1</sup></div><div class="l"><span class="fr"><span class="n">d&sup2;</span><span class="d">d&Delta;r&sup2;</span></span> &nbsp;&Delta;r<sup>n</sup> &nbsp;=&nbsp; <b>n(n&minus;1)</b>&thinsp;&Delta;r<sup>n&minus;2</sup></div><div class="l"><span class="fr"><span class="n">d<sup>n</sup></span><span class="d">d&Delta;r<sup>n</sup></span></span> &nbsp;&Delta;r<sup>n</sup> &nbsp;=&nbsp; <b>n(n&minus;1)(n&minus;2)&hellip;1</b> &nbsp;=&nbsp; <b>n!</b></div><div class="why">So write the answer as c&#8320; + c&#8321;&Delta;r + c&#8322;&Delta;r&sup2; + &hellip; and differentiate n times at &Delta;r = 0. Terms below n are gone. Terms above n still carry &Delta;r and vanish. Only c&#8345; is left, and it arrives multiplied by that accumulated n!. Dividing it back out is the only reason the coefficient is 1/n!.</div>
+</div></details>
+
+
+<div class="scroll"><table>
+<caption>Every guess, priced at the current move. The last column is what is still missing.</caption>
+<thead><tr><th>Using</th><th>Price</th><th>Off by</th></tr></thead>
+<tbody id="cvb"></tbody>
+</table></div>
+</section>
+
+
+<section id="p1" role="tabpanel" hidden>
+<div class="why"><b>Slope calculation:</b> differentiate every discounted cash flow, add the derivatives, then normalize by price. The live chain below shows each numerical step from Macaulay duration to modified duration and finally to term 1.</div>
+<div class="recall"><span class="lbl">From Taylor</span>P(r+&Delta;r) = P(r) + <b class="t1">P&prime;(r)&thinsp;&Delta;r</b> <span class="dim">+ <span class="fr"><span class="n">1</span><span class="d">2</span></span>P&Prime;(r)&thinsp;&Delta;r&sup2; + &hellip;</span></div><p class="handoff"><b>Why divide by P?</b> P&prime; alone is measured in price units. Dividing by P converts it into a <b>percentage per unit of rate</b>, which compares across any two bonds.</p>
+<div class="eq" id="eq-d"></div>
+
+
+<details><summary>Show the derivation</summary><div class="body">
+<div class="lvl"><span class="tag">the bond</span><span class="l" style="margin:0">P &nbsp;=&nbsp; &Sigma; <span class="fr"><span class="n">CF<sub>t</sub></span><span class="d">(1+r)<sup>t</sup></span></span></span></div><div class="lvl"><span class="tag">one payment</span><span class="l" style="margin:0"><span class="fr"><span class="n">d</span><span class="d">dr</span></span> <span class="fr"><span class="n">1</span><span class="d">(1+r)<sup>t</sup></span></span> &nbsp;=&nbsp; &minus; <span class="fr"><span class="n">t</span><span class="d">(1+r)<sup>t+1</sup></span></span></span></div><div class="lvl"><span class="tag">all of them</span><span class="l" style="margin:0">P&prime; &nbsp;=&nbsp; &minus; &Sigma; <span class="fr"><span class="n">t&thinsp;CF<sub>t</sub></span><span class="d">(1+r)<sup>t+1</sup></span></span></span></div><div class="why">Differentiate the sum one payment at a time. Nothing else has happened yet.</div><div class="lvl"><span class="tag">split it</span><span class="l" style="margin:0">(1+r)<sup>t+1</sup> &nbsp;=&nbsp; (1+r)<sup>t</sup> &times; (1+r)</span></div><div class="why">The <span class="num">(1+r)<sup>t</sup></span> half turns <span class="num">CF<sub>t</sub></span> back into <span class="num">PV<sub>t</sub></span>, the value already sitting in the table. The lone <span class="num">(1+r)</span> depends on no <span class="num">t</span>, so it comes out of the sum:</div><div class="lvl"><span class="tag">&nbsp;</span><span class="l" style="margin:0">P&prime; &nbsp;=&nbsp; &minus;<span class="fr"><span class="n">&Sigma; t&thinsp;PV<sub>t</sub></span><span class="d">1 + r</span></span></span></div><div class="lvl"><span class="tag">&divide; by P</span><span class="l" style="margin:0">&minus;P&prime;/P &nbsp;=&nbsp; <span class="fr"><span class="n">&Sigma; t&thinsp;w<sub>t</sub></span><span class="d">1 + r</span></span></span></div><div class="why">Dividing by P turns every <span class="num">PV<sub>t</sub></span> into its share <span class="num">w<sub>t</sub></span>.</div>
+<div class="why"><span class="num">&Sigma; t w<sub>t</sub></span> is the average wait, each year weighted by how much of the price that payment carries. It is called <span class="nm">Macaulay duration</span>. Nobody assumed it &mdash; it appeared, because differentiating a power drops the exponent out in front. Divide it by <span class="num">1+r</span> and you get <span class="nm2">modified duration</span>, the number that multiplies the rate move.</div>
+</div></details>
+
+
+<div class="scroll" id="tbl1"></div>
+<div class="chain" id="chain1"></div>
+
+
+<div class="mets">
+<div class="met"><div class="k">Price total change</div><div class="v" id="b-ac"></div></div>
+<div class="met"><div class="k" style="color:var(--first)">Term 1 contribution</div><div class="v t1" id="b-t1"></div></div>
+<div class="met"><div class="k">Still unexplained</div><div class="v t3" id="b-u1"></div></div>
+</div>
+
+
+</section>
+
+
+<section id="p2" role="tabpanel" hidden>
+<div class="why"><b>Convexity calculation:</b> differentiate price a second time, divide P&Prime;(r) by P(r), then multiply by &frac12;P&Delta;r&sup2;. The live chain below shows each numerical step.</div>
+<div class="recall"><span class="lbl">From Taylor</span>P(r+&Delta;r) = P(r) <span class="dim">+ P&prime;(r)&thinsp;&Delta;r</span> + <b class="t2"><span class="fr"><span class="n">1</span><span class="d">2</span></span>P&Prime;(r)&thinsp;&Delta;r&sup2;</b> <span class="dim">+ &hellip;</span></div><p class="handoff">Same again, one level up: differentiate the pricing formula a second time, then divide by P.</p>
+<div class="eq" id="eq-c"></div>
+
+
+<details><summary>Show the derivation</summary><div class="body">
+<div class="lvl"><span class="tag">one payment</span><span class="l" style="margin:0"><span class="fr"><span class="n">d&sup2;</span><span class="d">dr&sup2;</span></span> <span class="fr"><span class="n">1</span><span class="d">(1+r)<sup>t</sup></span></span> &nbsp;=&nbsp; <span class="fr"><span class="n">t(t+1)</span><span class="d">(1+r)<sup>t+2</sup></span></span></span></div><div class="why">Differentiating twice drops <span class="num">t</span>, then <span class="num">t+1</span>, and pushes the exponent up by two.</div><div class="lvl"><span class="tag">all of them</span><span class="l" style="margin:0">P&Prime; &nbsp;=&nbsp; &Sigma; <span class="fr"><span class="n">t(t+1)&thinsp;CF<sub>t</sub></span><span class="d">(1+r)<sup>t+2</sup></span></span></span></div><div class="lvl"><span class="tag">split it</span><span class="l" style="margin:0">(1+r)<sup>t+2</sup> &nbsp;=&nbsp; (1+r)<sup>t</sup> &times; (1+r)&sup2;</span></div><div class="why">Same move as before. <span class="num">(1+r)<sup>t</sup></span> rebuilds <span class="num">PV<sub>t</sub></span>; the <span class="num">(1+r)&sup2;</span> carries no <span class="num">t</span> and leaves the sum:</div><div class="lvl"><span class="tag">&nbsp;</span><span class="l" style="margin:0">P&Prime; &nbsp;=&nbsp; <span class="fr"><span class="n">&Sigma; t(t+1)&thinsp;PV<sub>t</sub></span><span class="d">(1 + r)&sup2;</span></span></span></div><div class="lvl"><span class="tag">&divide; by P</span><span class="l" style="margin:0">P&Prime;/P &nbsp;=&nbsp; <span class="fr"><span class="n">&Sigma; t(t+1)&thinsp;w<sub>t</sub></span><span class="d">(1 + r)&sup2;</span></span></span></div>
+<div class="why">Differentiating twice brings down <span class="num">t</span>, then <span class="num">t+1</span>, and leaves two powers underneath. That is the whole of convexity. The <span class="num">&frac12;</span> standing in front of it in the expansion is the Taylor coefficient <span class="num">1/2!</span>, nothing more.</div>
+</div></details>
+
+
+<div class="scroll" id="tbl2"></div>
+<div class="chain" id="chain2"></div>
+
+
+<div class="mets">
+<div class="met"><div class="k">Price total change</div><div class="v" id="c-ac"></div></div>
+<div class="met"><div class="k" style="color:var(--first)">Term 1 contribution</div><div class="v t1" id="c-t1"></div></div>
+<div class="met"><div class="k" style="color:var(--second)">Term 2 contribution</div><div class="v t2" id="c-t2"></div></div>
+<div class="met"><div class="k">Still unexplained</div><div class="v t3" id="c-res"></div></div>
+</div>
+<p class="note">Tab 1 left <span class="num t3" id="c-gap"></span> unexplained. Term 2 takes
+<span class="num t2" id="c-t2b"></span> of it, and what survives both is the third derivative and everything after.</p>
+
+
+<div class="scroll"><table>
+<caption>Walk the same distance down, then the same distance up. The gain beats the loss, every row.</caption>
+<thead><tr><th>Move</th><th>Rate falls</th><th>Rate rises</th><th class="new2">Sum</th><th class="new2">2 &times; term 2</th></tr></thead>
+<tbody id="asymb"></tbody>
+</table></div>
+<p class="note"><b>That is convexity in money: when the rate falls the price gains more than it loses when the rate rises by the same amount.</b> A straight line would put <span class="num">0.0000</span> down the whole Sum column. Adding the two moves cancels the first-order part, so the surplus that is left is exactly twice term 2 &mdash; the second derivative, measured by hand.</p>
+</section>
+
+
+
+
+<section id="p3" role="tabpanel" hidden>
+<p class="lead">Nothing above is an estimate of the price. Each piece is a named part of the same total &mdash;  
+so they must add back to it exactly. Here they are, added back.</p>
+<div class="vcard">
+<div class="vhead"><b>Price reconstruction</b><span class="vshock" id="v-shock"></span></div>
+<div class="vgroup">Approximation</div>
+<div class="scroll" style="margin-top:0"><table>
+<thead><tr><th>Part</th><th>Amount</th><th>Running total</th></tr></thead>
+<tbody id="valb"></tbody>
+</table></div>
+<div class="vgroup">Validation against full repricing</div>
+<div class="scroll" style="margin-top:0"><table>
+<tbody><tr class="v-res"><td>Higher-order residual<span class="vsub">Full repricing &minus; Taylor estimate</span></td><td id="v-res"></td><td id="v-res-total"></td></tr></tbody>
+<tfoot><tr><td>Full repriced bond price</td><td></td><td id="v-act"></td></tr></tfoot>
+</table></div>
+<div class="vmetrics">
+<div class="vmetric"><div class="k">Residual share of actual price change</div><div class="v" id="v-share"></div><div class="n" id="v-share-calc"></div></div>
+<div class="vmetric"><div class="k">Approximation quality</div><div class="v" id="v-quality"></div><div class="n">Use the residual to judge materiality.</div></div>
+</div>
+</div>
+<div class="vguide"><span class="vbadge">Decision guidance</span><p id="v-note"></p></div>
+</section>
+
+
+<div class="assume">
+What this leaves out
+<ul>
+<li>One flat rate for every payment, rather than a real yield curve</li>
+<li>Annual coupons; most real bonds pay twice a year, which changes the numbers but not the structure</li>
+<li>Settlement on a coupon date, so no accrued interest</li>
+<li>No credit risk, no tax, no calls or prepayment</li>
+</ul>
+</div>
+
+<div class="m5-launch">
+  <div><h2>Ready to apply what you learned?</h2><p>Playground combines the curve, duration, convexity and full repricing in one interactive scenario.</p></div>
+  <button class="m5-primary" id="m5-open" type="button">Open Module 5 · Playground</button>
+</div>
+<section id="m5" aria-labelledby="m5-title">
+ <div class="m5-shell">
+  <aside class="m5-side">
+   <div class="m5-brand">Duration &amp;<br>Convexity Lab<small>Learn. Visualize. Apply.</small></div>
+   <nav class="m5-nav" aria-label="Learning modules">
+    <div><b>1 · Bond Price vs Yield</b>See the relationship</div>
+    <div><b>2 · Duration</b>First-order effect</div>
+    <div><b>3 · Convexity</b>Second-order effect</div>
+    <div><b>4 · Taylor Expansion</b>The math behind it</div>
+    <div class="active"><b>5 · Playground</b>Apply what you learned</div>
+   </nav>
+   <div class="m5-goal"><b>Learning Goal</b>Understand how an interest-rate move changes bond price, and how Duration and Convexity explain the move.</div>
+  </aside>
+  <main class="m5-main">
+   <header class="m5-head"><div><h2 id="m5-title">Module 5 · Playground</h2><p>Build a bond, apply a rate shock, and see how Duration and Convexity explain the price move.</p></div><button class="m5-guide" type="button">? &nbsp; Quick Guide</button></header>
+   <div class="m5-top">
+    <section class="m5-card"><div class="m5-card-h">1. Build the Bond</div><div class="m5-body">
+     <div class="m5-two">
+      <div class="m5-field"><label for="m5-c">Coupon Rate</label><div class="m5-value"><input id="m5-c-num" type="number" min="0" max="10" step="0.25" value="5"><span>%</span></div><input id="m5-c" type="range" min="0" max="10" step="0.25" value="5"><div class="m5-scale"><span>0%</span><span>10%</span></div></div>
+      <div class="m5-field"><label for="m5-t">Maturity</label><div class="m5-value"><input id="m5-t-num" type="number" min="1" max="30" step="1" value="10"><span>Years</span></div><input id="m5-t" type="range" min="1" max="30" step="1" value="10"><div class="m5-scale"><span>1Y</span><span>30Y</span></div></div>
+     </div><div class="m5-presets"><button class="m5-chip" data-t="2" type="button">Short (2Y)</button><button class="m5-chip" data-t="5" type="button">Medium (5Y)</button><button class="m5-chip on" data-t="10" type="button">Long (10Y)</button></div>
+    </div></section>
+    <section class="m5-card"><div class="m5-card-h green">2. Apply a Rate Shock</div><div class="m5-body">
+     <div class="m5-yields"><div class="m5-yield"><small>Starting Yield</small><strong id="m5-y0-o">4.00%</strong></div><div class="m5-arrow">→</div><div class="m5-yield"><small>New Yield</small><strong id="m5-y1-o">3.00%</strong></div></div>
+     <div class="m5-field"><label for="m5-y0">Starting Yield</label><input id="m5-y0" type="range" min="1" max="12" step="0.25" value="4"></div>
+     <div class="m5-shockline" id="m5-dy-o">−100 bps</div><div class="m5-field"><label for="m5-dy" class="sr-only">Yield shock</label><input id="m5-dy" type="range" min="-300" max="300" step="25" value="-100"><div class="m5-scale"><span>−300 bps</span><span>0 bps</span><span>+300 bps</span></div></div>
+     <div class="m5-shocks"><button class="m5-chip on" data-bp="-100" type="button">−100 bps</button><button class="m5-chip" data-bp="0" type="button">0 bps</button><button class="m5-chip" data-bp="100" type="button">+100 bps</button></div>
+    </div></section>
+    <section class="m5-card"><div class="m5-card-h purple">3. Make Your Prediction</div><div class="m5-body">
+     <p class="m5-q">What will happen to the bond price?</p><div class="m5-choice" id="m5-dir"><button data-v="rise" type="button">↗ &nbsp; Rise</button><button data-v="fall" type="button">↘ &nbsp; Fall</button></div>
+     <p class="m5-q">Will duration alone be enough?</p><div class="m5-choice three" id="m5-enough"><button data-v="yes" type="button">Yes</button><button class="selected" data-v="unsure" type="button">Not sure</button><button data-v="no" type="button">No</button></div>
+     <button class="m5-run" id="m5-run" type="button">▶ &nbsp; Run Playground</button>
+    </div></section>
+   </div>
+   <div class="m5-results m5-hidden" id="m5-results">
+    <section class="m5-card m5-chartbox"><div class="m5-card-h">4. See the Move</div><div class="m5-chart"><div class="m5-legend"><span>● Actual Curve</span><span style="color:#1B54D6">● Today</span><span style="color:#0E7C5A">● New Point</span></div><svg id="m5-svg" viewBox="0 0 620 250" role="img" aria-label="Bond price versus yield"></svg></div><div class="m5-summary"><span id="m5-s-y"></span><span id="m5-s-p"></span></div></section>
+    <section class="m5-card"><div class="m5-card-h purple">5. Explain the Move</div><div class="m5-body m5-break"><div class="m5-lines"><div class="m5-line"><span><i class="m5-dot" style="background:#1B54D6"></i>Duration Contribution</span><b id="m5-t1"></b></div><div class="m5-line"><span><i class="m5-dot" style="background:#6B3FA0"></i>Convexity Contribution</span><b id="m5-t2"></b></div><div class="m5-line"><span><i class="m5-dot" style="background:#8494A8"></i>Higher-order Residual</span><b id="m5-r"></b></div><hr style="border:0;border-top:1px solid var(--rule);width:100%"><div class="m5-line"><b>Total Price Change</b><b id="m5-act"></b></div></div><div class="m5-bars" id="m5-bars"></div></div></section>
+    <section class="m5-card"><div class="m5-card-h purple">6. Check the Approximation</div><div class="m5-body m5-approx"><div class="m5-ap-lines"><div class="m5-ap-row"><span>Duration only estimate</span><b id="m5-p1" class="t1"></b></div><div class="m5-ap-row"><span>Duration + Convexity</span><b id="m5-p2" class="t2"></b></div><div class="m5-ap-row"><span>Full Repricing (Actual)</span><b id="m5-pa" style="color:var(--gain)"></b></div></div><div><b style="font-size:10px">Error vs Actual</b><div class="m5-error" id="m5-errors"></div></div></div></section>
+    <section class="m5-card m5-discovery"><div class="m5-insight"><h3>💡 Discovery</h3><p id="m5-insight1"></p><p id="m5-insight2"></p></div><div class="m5-action"><b>Try the Opposite Shock</b>See what happens if yield moves by the same amount in the other direction.<button id="m5-opposite" type="button">Opposite shock →</button></div><div class="m5-action"><b>Reset Playground</b>Clear predictions and return to the default case.<button id="m5-reset" type="button">Reset ↻</button></div></section>
+   </div>
+  </main>
+ </div>
+</section>
+
+</div>
+</main>
+</div>
+<script>
+(function(){
+"use strict";
+var F=100,S={c:0.05,T:10,y0:0.05,dy:0.01},tab=0;
+function el(id){return document.getElementById(id);}
+function fmt(v){return (v<0?"\u2212":"+")+Math.abs(v).toFixed(4);}
+function n4(v){return v.toFixed(4);}
+function bond(c,T,y){
+ var rows=[],P=0,i,cf,pv;
+ for(i=1;i<=T;i++){cf=F*c+(i===T?F:0);pv=cf/Math.pow(1+y,i);P+=pv;rows.push({t:i,cf:cf,pv:pv});}
+ var s1=0,s2=0,s3=0;
+ rows.forEach(function(r){s1+=r.t*r.pv;s2+=r.t*(r.t+1)*r.pv;s3+=r.t*(r.t+1)*(r.t+2)*r.pv;});
+ var dm=s1/P,cr=s2/P,cc=cr/Math.pow(1+y,2);
+ return {P:P,rows:rows,dmac:dm,dmod:dm/(1+y),craw:cr,c:cc,
+ Pp:-(dm/(1+y))*P,Ppp:cc*P,Pppp:-(s3/P)/Math.pow(1+y,3)*P};
+}
+function table(host,b,lvl){
+ var h='<table><caption>The same table on both pages. Each derivative adds one column.</caption>'+
+ '<thead><tr><th>t</th><th>Cash flow</th><th>Value today</th><th>Share of price</th>'+
+ '<th class="new">t &times; share</th>'+(lvl>=2?'<th class="new2">t(t+1) &times; share</th>':'')+
+ '</tr></thead><tbody>';
+ b.rows.forEach(function(r){
+ var w=r.pv/b.P;
+ h+='<tr'+(r.cf===0?' class="zero"':'')+'><td>'+r.t+'</td><td>'+r.cf.toFixed(2)+'</td><td>'+
+ r.pv.toFixed(4)+'</td><td>'+(w*100).toFixed(2)+'%</td><td>'+(r.t*w).toFixed(4)+'</td>'+
+ (lvl>=2?'<td>'+(r.t*(r.t+1)*w).toFixed(4)+'</td>':'')+'</tr>';
+ });
+ h+='</tbody><tfoot><tr><td>Total</td><td></td><td>'+n4(b.P)+'</td><td>100.00%</td>'+
+ '<td class="t1">'+n4(b.dmac)+'</td>'+
+ (lvl>=2?'<td class="t2">'+n4(b.craw)+'</td>':'')+'</tr></tfoot></table>';
+ el(host).innerHTML=h;
+}
+var X0=56,X1=838,Y0=16,Y1=252,chartMap=null,dragging=false;
+function drawChart(b0){
+ /* tab 0 is about how the approximations converge, so it needs a wide window.
+     tabs 1-3 are about one move, so the window frames that move and keeps the
+     bars readable: widening the window compresses every vertical measure. */
+ var FLOOR=0.002, HALF=(tab===0)?0.07:Math.max(0.025,1.3*Math.abs(S.dy));
+ var lo=Math.max(FLOOR,S.y0-HALF), hi=S.y0+HALF;
+ var pl=bond(S.c,S.T,hi).P,ph=bond(S.c,S.T,lo).P,pad=(ph-pl)*0.08;pl-=pad;ph+=pad;
+ function sx(y){return X0+(y-lo)/(hi-lo)*(X1-X0);}
+ function sy(p){return Y1-(p-pl)/(ph-pl)*(Y1-Y0);}
+ chartMap={lo:lo,hi:hi};
+ function pts(f){var o=[],k,y;for(k=0;k<=64;k++){y=lo+(hi-lo)*k/64;o.push([sx(y),sy(f(y))]);}return o;}
+ function str(a){return a.map(function(p){return p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" ");}
+ var exact=function(y){return bond(S.c,S.T,y).P;},
+ flat=function(){return b0.P;},
+ line=function(y){return b0.P+b0.Pp*(y-S.y0);},
+ para=function(y){return b0.P+b0.Pp*(y-S.y0)+0.5*b0.Ppp*Math.pow(y-S.y0,2);};
+ var g="",i,gy,xa=sx(S.y0),xb=sx(S.y0+S.dy),ya=sy(b0.P),moved=Math.abs(S.dy)>1e-9;
+ for(i=0;i<=4;i++){gy=Y0+(Y1-Y0)*i/4;
+ g+='<line x1="'+X0+'" y1="'+gy.toFixed(1)+'" x2="'+X1+'" y2="'+gy.toFixed(1)+'" stroke="#C6D2DF"/>';}
+ if(tab>=2){
+ var a=pts(exact),b=pts(line).slice().reverse();
+ g+='<polygon points="'+str(a)+" "+str(b)+'" fill="#6B3FA0" fill-opacity="0.13" stroke="none"/>';
+ }
+ g+='<line x1="'+xa+'" y1="'+Y0+'" x2="'+xa+'" y2="'+Y1+'" stroke="#8494A8" stroke-dasharray="2 4"/>';
+ if(moved){
+ g+='<line x1="'+xb.toFixed(1)+'" y1="'+Y0+'" x2="'+xb.toFixed(1)+'" y2="'+Y1+'" stroke="#0E1A2B" stroke-dasharray="2 4" stroke-opacity=".55"/>';
+ var ym=ya, tk=4;
+ g+='<line x1="'+xa+'" y1="'+ym.toFixed(1)+'" x2="'+xb.toFixed(1)+'" y2="'+ym.toFixed(1)+'" stroke="#0E1A2B" stroke-opacity=".5" stroke-width="1.25"/>';
+ g+='<line x1="'+xa+'" y1="'+(ym-tk).toFixed(1)+'" x2="'+xa+'" y2="'+(ym+tk).toFixed(1)+'" stroke="#0E1A2B" stroke-opacity=".5"/>';
+ g+='<line x1="'+xb.toFixed(1)+'" y1="'+(ym-tk).toFixed(1)+'" x2="'+xb.toFixed(1)+'" y2="'+(ym+tk).toFixed(1)+'" stroke="#0E1A2B" stroke-opacity=".5"/>';
+ g+=tx((xa+xb)/2, ym-9, (S.dy>=0?"+":"\u2212")+Math.abs(S.dy*10000).toFixed(0)+"bp", "#4A5B74", "middle");
+ }
+ if(tab>=1&&moved)g+='<line x1="'+xb.toFixed(1)+'" y1="'+ya.toFixed(1)+'" x2="'+xb.toFixed(1)+'" y2="'+sy(line(S.y0+S.dy)).toFixed(1)+'" stroke="#1B54D6" stroke-width="5"/>';
+ if(tab>=2&&moved)g+='<line x1="'+xb.toFixed(1)+'" y1="'+sy(line(S.y0+S.dy)).toFixed(1)+'" x2="'+xb.toFixed(1)+'" y2="'+sy(para(S.y0+S.dy)).toFixed(1)+'" stroke="#6B3FA0" stroke-width="6"/>';
+ if(tab<=1)g+='<polyline fill="none" stroke="#1B54D6" stroke-width="1.75" points="'+str(pts(line))+'"/>';
+ /* truth underneath, parabola dashed on top: where they coincide you see the dashes
+     riding the black line; where they part you see both. */
+ g+='<polyline fill="none" stroke="#0E1A2B" stroke-width="2.5" points="'+str(pts(exact))+'"/>';
+ if(tab!==1)g+='<polyline fill="none" stroke="#6B3FA0" stroke-width="2" stroke-dasharray="7 5" points="'+str(pts(para))+'"/>';
+ var yb=sy(exact(S.y0+S.dy)), moveRight=xb>=xa;
+ g+='<circle cx="'+xa+'" cy="'+ya.toFixed(1)+'" r="4" fill="#0E1A2B"/>';
+ g+='<circle cx="'+xb.toFixed(1)+'" cy="'+yb.toFixed(1)+'" r="5" fill="#0E1A2B" stroke="#FFFFFF" stroke-width="2"/>';
+ g+='<circle id="drag-handle" cx="'+xb.toFixed(1)+'" cy="'+yb.toFixed(1)+'" r="15" fill="transparent" aria-label="Drag to change the shocked rate"/>';
+ if(moved){
+   var txToday=moveRight?xa-10:xa+10, aToday=moveRight?"end":"start";
+   var txNew=moveRight?xb+10:xb-10, aNew=moveRight?"start":"end";
+   g+='<text class="point-label" x="'+txToday.toFixed(1)+'" y="'+(ya-10).toFixed(1)+'" text-anchor="'+aToday+'" fill="#4A5B74" style="font:11px ui-monospace,Menlo,monospace">today '+(S.y0*100).toFixed(2)+'%</text>';
+   g+='<text class="point-label" x="'+txNew.toFixed(1)+'" y="'+(yb-10).toFixed(1)+'" text-anchor="'+aNew+'" fill="#0E1A2B" style="font:11px ui-monospace,Menlo,monospace">new '+((S.y0+S.dy)*100).toFixed(2)+'%</text>';
+ }
+ function tx(x,y,s,f,a){return '<text x="'+x+'" y="'+y+'" fill="'+f+'" text-anchor="'+(a||"start")+'" style="font:12px ui-monospace,Menlo,monospace">'+s+'</text>';}
+ g+=tx(X0,Y1+22,(lo*100).toFixed(1)+"%","#8494A8")+
+ tx(xa,Y1+22,(S.y0*100).toFixed(2)+"% today","#4A5B74","middle")+
+ tx(X1,Y1+22,(hi*100).toFixed(1)+"%","#8494A8","end")+
+ tx(X0-8,Y0+4,ph.toFixed(0),"#8494A8","end")+tx(X0-8,Y1+4,pl.toFixed(0),"#8494A8","end");
+ el("cv").innerHTML="<title>Price against the interest rate</title>"+g;
+ function chip(c,l,t,cls){return '<span><span class="swatch '+(cls||"")+'" style="background:'+c+'"></span><span style="color:'+t+'">'+l+'</span></span>';}
+ var L="";
+ if(tab<=1)L+=chip("#1B54D6",tab===0?"1 term \u2014 sloped":"Term 1 only","#1B54D6");
+ if(tab!==1)L+=chip("#6B3FA0",tab===0?"2 terms \u2014 bent (dashed)":"Terms 1 + 2 (dashed)","#6B3FA0");
+ L+=chip("#0E1A2B","Bond price","#4A5B74");
+ if(tab>=2)L+=chip("#6B3FA0","What term 2 fills in","#6B3FA0","area");
+ el("lg").innerHTML=L;
+}
+function syncSlider(){
+ var mn=Math.max(-700,-Math.round((S.y0-0.002)*10000)), sl=el("sl");
+ sl.min=mn;
+ if(+sl.value<mn){sl.value=mn;}
+ S.dy=+sl.value/10000;
+}
+function chartX(evt){
+ var svg=el("cv"),pt=svg.createSVGPoint();pt.x=evt.clientX;pt.y=evt.clientY;
+ return pt.matrixTransform(svg.getScreenCTM().inverse()).x;
+}
+function dragTo(evt){
+ if(!chartMap)return;
+ var x=Math.max(X0,Math.min(X1,chartX(evt)));
+ var y=chartMap.lo+(x-X0)/(X1-X0)*(chartMap.hi-chartMap.lo);
+ var bp=Math.round((y-S.y0)*10000/10)*10,sl=el("sl");
+ bp=Math.max(+sl.min,Math.min(+sl.max,bp));
+ sl.value=bp;S.dy=bp/10000;update();
+}
+el("cv").addEventListener("pointerdown",function(e){
+ if(e.target&&e.target.id==="drag-handle"){dragging=true;el("cv").classList.add("dragging");el("cv").setPointerCapture(e.pointerId);dragTo(e);e.preventDefault();}
+});
+el("cv").addEventListener("pointermove",function(e){if(dragging){dragTo(e);e.preventDefault();}});
+el("cv").addEventListener("pointerup",function(e){dragging=false;el("cv").classList.remove("dragging");try{el("cv").releasePointerCapture(e.pointerId);}catch(_){}});
+el("cv").addEventListener("pointercancel",function(){dragging=false;el("cv").classList.remove("dragging");});
+/* parseFloat alone prefix-parses, so "5abc" and "5..0" would slip through as 5.
+   Shape-check first: digits, one optional point, an optional trailing percent. */
+var NUMERIC=/^\s*\d*\.?\d+\s*%?\s*$/;
+function readInputs(){
+ function grab(id,w,lo,hi,sc,intOnly){
+ var raw=el(id).value.trim(),v=NUMERIC.test(raw)?parseFloat(raw):NaN;
+ var bad=(isNaN(v)||v<lo||v>hi||(intOnly&&v!==Math.round(v)));
+ el(w).classList.toggle("err",bad);
+ return bad?null:v/sc;
+ }
+ var c=grab("i-c","w-c",0,20,100,false),T=grab("i-T","w-T",1,30,1,true),y=grab("i-y","w-y",0.5,20,100,false);
+ if(c!==null)S.c=c; if(T!==null)S.T=T; if(y!==null)S.y0=y;
+ syncSlider();
+}
+function fr(n,d){return '<span class="fr"><span class="n">'+n+'</span><span class="d">'+d+'</span></span>';}
+function update(){
+ var b0=bond(S.c,S.T,S.y0),y=S.y0+S.dy,bn=bond(S.c,S.T,y);
+ var act=bn.P-b0.P,t1=b0.Pp*S.dy,t2=0.5*b0.Ppp*S.dy*S.dy;
+ el("slout").innerHTML=(S.dy>=0?"+":"\u2212")+Math.abs(S.dy*10000).toFixed(0)+
+ 'bp <span class="y">&rarr; '+(y*100).toFixed(2)+"%</span>";
+ el("o-p0").textContent=n4(b0.P);
+ el("o-p").textContent=n4(bn.P);
+ el("o-d").textContent=fmt(act);
+ el("o-d").style.color=act<0?"var(--loss)":"var(--gain)";
+ var cf1=(F*S.c).toFixed(2),cfN=(F*S.c+F).toFixed(2);
+ el("eq-p").innerHTML="P &nbsp;=&nbsp; "+fr(cf1,"(1+r)<sup>1</sup>")+" &nbsp;+&nbsp; "+
+ fr(cf1,"(1+r)<sup>2</sup>")+" &nbsp;+&nbsp; &hellip; &nbsp;+&nbsp; "+fr(cfN,"(1+r)<sup>"+S.T+"</sup>");
+ var q1=b0.Pp*S.dy,q2=q1+0.5*b0.Ppp*S.dy*S.dy,q3=q2+b0.Pppp*Math.pow(S.dy,3)/6;
+ el("cvb").innerHTML=
+ '<tr><td>0 terms</td><td>'+n4(b0.P)+"</td><td>"+fmt(-act)+"</td></tr>"+
+ '<tr><td>1 term</td><td>'+n4(b0.P+q1)+"</td><td>"+fmt(q1-act)+"</td></tr>"+
+ '<tr><td>2 terms</td><td>'+n4(b0.P+q2)+"</td><td>"+fmt(q2-act)+"</td></tr>"+
+ '<tr><td>3 terms</td><td>'+n4(b0.P+q3)+"</td><td>"+fmt(q3-act)+"</td></tr>"+
+ '<tr><td>bond price</td><td>'+n4(bn.P)+"</td><td>0.0000</td></tr>";
+ el("eq-d").innerHTML='<span class="nm2">modified duration</span> &nbsp;=&nbsp; &minus;P&prime;/P &nbsp;=&nbsp; '+
+ fr('&Sigma; t&thinsp;w<sub>t</sub><em class="lab">Macaulay duration</em>','1 + r');
+ el("eq-c").innerHTML='<span class="nm3">convexity</span> &nbsp;=&nbsp; P&Prime;/P &nbsp;=&nbsp; '+
+ fr("&Sigma; t(t+1)&thinsp;w<sub>t</sub>","(1 + r)&sup2;");
+ if(tab===1)table("tbl1",b0,1);
+ if(tab===2)table("tbl2",b0,2);
+ el("chain1").innerHTML=
+ '<span class="box">'+fr("&Sigma; t w<sub>t</sub>","1 + r")+'</span>'+
+ '<span class="op">=</span><span class="box">'+fr(n4(b0.dmac),n4(1+S.y0))+'</span>'+
+ '<span class="op">=</span><span class="box hi1">'+n4(b0.dmod)+'</span>'+
+ '<span class="op">&times; P &times; &Delta;r &nbsp;&rarr;&nbsp; term 1, below</span>';
+ el("chain2").innerHTML=
+ '<span class="box">'+fr("&Sigma; t(t+1) w<sub>t</sub>","(1 + r)&sup2;")+'</span>'+
+ '<span class="op">=</span><span class="box">'+fr(n4(b0.craw),n4(Math.pow(1+S.y0,2)))+'</span>'+
+ '<span class="op">=</span><span class="box hi2">'+n4(b0.c)+'</span>'+
+ '<span class="op">&times; &frac12; &times; P &times; &Delta;r&sup2; &nbsp;&rarr;&nbsp; term 2, below</span>';
+ el("b-t1").textContent=fmt(t1);
+ el("b-ac").textContent=fmt(act);
+ el("b-ac").style.color=act<0?"var(--loss)":"var(--gain)";
+ el("b-u1").textContent=fmt(act-t1);
+ el("c-ac").textContent=fmt(act);
+ el("c-ac").style.color=act<0?"var(--loss)":"var(--gain)";
+ el("c-gap").textContent=fmt(act-t1);
+ el("c-t2").textContent=fmt(t2);
+ el("c-t1").textContent=fmt(t1);
+ el("c-t2b").textContent=fmt(t2);
+ el("c-res").textContent=fmt(act-t1-t2);
+ var asym="";
+ [0.01,0.02,0.03].forEach(function(m){
+ var dn=bond(S.c,S.T,S.y0-m).P-b0.P,up=bond(S.c,S.T,S.y0+m).P-b0.P;
+ asym+="<tr><td>"+(m*10000).toFixed(0)+"bp</td><td>"+fmt(dn)+"</td><td>"+fmt(up)+
+ '</td><td class="t2">'+fmt(dn+up)+'</td><td class="t2">'+fmt(b0.c*b0.P*m*m)+"</td></tr>";
+ });
+ el("asymb").innerHTML=asym;
+ var res=act-t1-t2, big=Math.abs(act)>1e-9;
+ var taylor=b0.P+t1+t2, share=big?Math.abs(res/act)*100:0;
+ el("v-shock").textContent=(S.dy>=0?"+":"\u2212")+Math.abs(S.dy*10000).toFixed(0)+"bp rate shock";
+ el("valb").innerHTML=
+ '<tr><td>Price today</td><td>\u2014</td><td>'+n4(b0.P)+'</td></tr>'+
+ '<tr><td class="t1">Duration<span class="vsub">Term 1</span></td><td class="t1">'+fmt(t1)+'</td><td>'+n4(b0.P+t1)+'</td></tr>'+
+ '<tr><td class="t2">Convexity<span class="vsub">Term 2</span></td><td class="t2">'+fmt(t2)+'</td><td>'+n4(taylor)+'</td></tr>'+
+ '<tr class="v-est"><td>Second-order Taylor estimate<span class="vsub">Price today + Duration + Convexity</span></td><td></td><td>'+n4(taylor)+'</td></tr>';
+ el("v-res").textContent=fmt(res);
+ el("v-res-total").textContent=n4(bn.P);
+ el("v-act").textContent=n4(bn.P);
+ el("v-share").textContent=big?share.toFixed(2)+"%":"0.00%";
+ el("v-share-calc").textContent=big?Math.abs(res).toFixed(4)+" \u00f7 "+Math.abs(act).toFixed(4):"No price change";
+ el("v-quality").textContent=!big?"No shock":share<1?"Close approximation":share<5?"Higher-order effects limited":"Higher-order effects visible";
+ el("v-note").innerHTML=big
+  ? '<b>Duration explains most of the price move.</b> Convexity contributes <b>'+fmt(t2)+'</b>. The remaining <b>'+fmt(res)+'</b> residual is <b>'+share.toFixed(2)+'%</b> of the actual price change, so full repricing remains the benchmark for this shock.'
+  : 'Move the slider. With no move there is nothing to decompose.';
+ drawChart(b0);
+}
+var btns=[el("tb0"),el("tb1"),el("tb2"),el("tb3")];
+function setTab(t){
+ tab=t;
+ [0,1,2,3].forEach(function(k){el("p"+k).hidden=(k!==t);});
+ btns.forEach(function(b,i){b.setAttribute("aria-selected",i===t?"true":"false");});
+ var hints=[
+   'Core idea: <span class="mini-eq">higher rate &rarr; lower price</span>',
+   'Working idea: <span class="mini-eq">duration effect = slope &times; rate move</span>',
+   'Working idea: <span class="mini-eq">convexity = correction for the bend</span>',
+   'Check: <span class="mini-eq">starting price + duration + convexity &asymp; new price</span>'
+ ];
+ el("tabhint").innerHTML=hints[t];
+ update();
+}
+btns.forEach(function(b,i){
+ b.addEventListener("click",function(){setTab(i);});
+ b.addEventListener("keydown",function(e){
+ if(e.key==="ArrowRight"||e.key==="ArrowLeft"){
+ e.preventDefault();
+ var nx=(i+(e.key==="ArrowRight"?1:3))%4;
+ btns[nx].focus();setTab(nx);
+ }
+ });
+});
+["i-c","i-T","i-y"].forEach(function(id){
+ el(id).addEventListener("input",function(){readInputs();update();});
+});
+el("sl").addEventListener("input",function(){S.dy=+el("sl").value/10000;update();});
+try{
+ readInputs();setTab(0);
+ var w=el("jswarn");if(w)w.parentNode.removeChild(w);
+ el("wrap").classList.remove("no-js");
+}catch(err){
+ var b=el("jswarn");
+ if(b){b.className="bad";b.innerHTML="<b>This page failed to start.</b> "+err.message;}
+ console.error(err);
+}
+})();
+</script>
+
+<script>
+(function(){
+ "use strict";
+ var F=100, st={c:5,T:10,y0:4,bp:-100,dir:null,enough:"unsure"};
+ function q(id){return document.getElementById(id)}
+ function price(c,T,y){var P=0,s1=0,s2=0;for(var t=1;t<=T;t++){var cf=F*c+(t===T?F:0),pv=cf/Math.pow(1+y,t);P+=pv;s1+=t*pv;s2+=t*(t+1)*pv}var dm=s1/P,dmod=dm/(1+y),conv=(s2/P)/Math.pow(1+y,2);return {P:P,Pp:-dmod*P,Ppp:conv*P,dmod:dmod,conv:conv}}
+ function sgn(v){return (v<0?'−':'+')+Math.abs(v).toFixed(2)}
+ function pct(v){return v.toFixed(2)+'%'}
+ function sync(){st.c=+q('m5-c').value;st.T=+q('m5-t').value;st.y0=+q('m5-y0').value;st.bp=+q('m5-dy').value;q('m5-c-num').value=st.c;q('m5-t-num').value=st.T;q('m5-y0-o').textContent=pct(st.y0);var y1=st.y0+st.bp/100;q('m5-y1-o').textContent=pct(y1);q('m5-dy-o').textContent=(st.bp<0?'−':st.bp>0?'+':'')+Math.abs(st.bp)+' bps';q('m5-dy-o').style.color=st.bp>0?'var(--loss)':st.bp<0?'var(--gain)':'var(--ink2)'}
+ function choose(host,key){q(host).addEventListener('click',function(e){if(e.target.tagName!=='BUTTON')return;Array.prototype.forEach.call(this.querySelectorAll('button'),function(b){b.classList.remove('selected')});e.target.classList.add('selected');st[key]=e.target.getAttribute('data-v')})}
+ function draw(c,T,y0,y1,p0,p1){var svg=q('m5-svg'),lo=Math.max(.001,Math.min(y0,y1)-.025),hi=Math.max(y0,y1)+.035;var vals=[],i;for(i=0;i<=70;i++){var y=lo+(hi-lo)*i/70;vals.push([y,price(c,T,y).P])}var pmin=Math.min.apply(null,vals.map(function(x){return x[1]})),pmax=Math.max.apply(null,vals.map(function(x){return x[1]})),pad=(pmax-pmin)*.1;pmin-=pad;pmax+=pad;function X(y){return 48+(y-lo)/(hi-lo)*540}function Y(p){return 210-(p-pmin)/(pmax-pmin)*170}var pts=vals.map(function(x){return X(x[0]).toFixed(1)+','+Y(x[1]).toFixed(1)}).join(' '),x0=X(y0),x1=X(y1),yy0=Y(p0),yy1=Y(p1);var g='';for(i=0;i<5;i++){var gy=40+i*42.5;g+='<line x1="48" y1="'+gy+'" x2="588" y2="'+gy+'" stroke="#DCE4EE"/>'}g+='<polyline points="'+pts+'" fill="none" stroke="#315FD4" stroke-width="2.3"/>';g+='<line x1="'+x0+'" y1="'+yy0+'" x2="'+x1+'" y2="'+yy1+'" stroke="#0E7C5A" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>';g+='<defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#0E7C5A"/></marker></defs>';g+='<circle cx="'+x0+'" cy="'+yy0+'" r="5" fill="#1B54D6" stroke="white" stroke-width="2"/><circle cx="'+x1+'" cy="'+yy1+'" r="5" fill="#0E7C5A" stroke="white" stroke-width="2"/>';g+='<text x="'+x0+'" y="'+(yy0-11)+'" text-anchor="middle" fill="#1B54D6" font-size="10">Today '+pct(y0*100)+' | '+p0.toFixed(2)+'</text>';g+='<text x="'+x1+'" y="'+(yy1-11)+'" text-anchor="middle" fill="#0E7C5A" font-size="10">New '+pct(y1*100)+' | '+p1.toFixed(2)+'</text>';g+='<text x="318" y="238" text-anchor="middle" fill="#4A5B74" font-size="10">Yield</text>';svg.innerHTML=g}
+ function run(){sync();var c=st.c/100,y0=st.y0/100,y1=y0+st.bp/10000;if(y1<=0){alert('New yield must remain above 0%.');return}var b0=price(c,st.T,y0),bn=price(c,st.T,y1),dy=y1-y0,act=bn.P-b0.P,t1=b0.Pp*dy,t2=.5*b0.Ppp*dy*dy,res=act-t1-t2,pdur=b0.P+t1,pdc=pdur+t2,err1=Math.abs(bn.P-pdur),err2=Math.abs(bn.P-pdc);q('m5-results').classList.remove('m5-hidden');q('m5-results').classList.remove('m5-fade');void q('m5-results').offsetWidth;q('m5-results').classList.add('m5-fade');draw(c,st.T,y0,y1,b0.P,bn.P);q('m5-s-y').textContent='Yield: '+pct(st.y0)+' → '+pct(st.y0+st.bp/100)+' ('+(st.bp>0?'+':'')+st.bp+' bps)';q('m5-s-p').textContent='Price: '+b0.P.toFixed(2)+' → '+bn.P.toFixed(2)+' ('+sgn(act)+')';q('m5-t1').textContent=sgn(t1);q('m5-t2').textContent=sgn(t2);q('m5-r').textContent=sgn(res);q('m5-act').textContent=sgn(act);q('m5-act').style.color=act>=0?'var(--gain)':'var(--loss)';q('m5-p1').textContent=pdur.toFixed(2);q('m5-p2').textContent=pdc.toFixed(2);q('m5-pa').textContent=bn.P.toFixed(2);var vals=[Math.abs(t1),Math.abs(t2),Math.abs(res),Math.abs(act)],mx=Math.max.apply(null,vals)||1,cols=['#1B54D6','#6B3FA0','#8494A8',act>=0?'#0E7C5A':'#B4243C'],labs=['Duration','Convexity','Residual','Actual'],raw=[t1,t2,res,act];q('m5-bars').innerHTML=vals.map(function(v,i){return '<div class="m5-bar-wrap"><div class="m5-bar" style="height:'+Math.max(3,85*v/mx)+'px;background:'+cols[i]+'"><em>'+sgn(raw[i])+'</em></div>'+labs[i]+'</div>'}).join('');var em=Math.max(err1,err2,.0001);q('m5-errors').innerHTML='<div class="m5-errrow"><span>'+err1.toFixed(2)+'</span><div class="m5-errbar"><i style="width:'+(100*err1/em)+'%"></i></div></div><div class="m5-errrow"><span>'+err2.toFixed(2)+'</span><div class="m5-errbar"><i style="width:'+(100*err2/em)+'%;background:#6B3FA0"></i></div></div><div class="m5-errrow"><span>0.00</span><div class="m5-errbar"><i style="width:1%;background:#0E7C5A"></i></div></div>';var direction=act>0?'increased':'decreased',under=act>0?'underestimated the price increase':'overestimated the price loss';q('m5-insight1').innerHTML='The bond price <b>'+direction+' by '+sgn(act)+'</b> when yield moved '+(st.bp>0?'up':'down')+' by '+Math.abs(st.bp)+' bps. Duration explained most of the move ('+sgn(t1)+').';var share=Math.abs(act)>1e-9?100*Math.abs(res/act):0;q('m5-insight2').innerHTML='Convexity added a positive correction ('+sgn(t2)+'), so duration alone <b>'+under+'</b>. The second-order residual is '+share.toFixed(2)+'% of the actual move; full repricing remains the benchmark.';q('m5').scrollIntoView({behavior:'smooth',block:'start'})}
+ ['m5-c','m5-t','m5-y0','m5-dy'].forEach(function(id){q(id).addEventListener('input',sync)});q('m5-c-num').addEventListener('input',function(){q('m5-c').value=this.value;sync()});q('m5-t-num').addEventListener('input',function(){q('m5-t').value=this.value;sync()});Array.prototype.forEach.call(document.querySelectorAll('[data-t]'),function(b){b.addEventListener('click',function(){q('m5-t').value=this.getAttribute('data-t');sync();Array.prototype.forEach.call(document.querySelectorAll('[data-t]'),function(x){x.classList.remove('on')});this.classList.add('on')})});Array.prototype.forEach.call(document.querySelectorAll('[data-bp]'),function(b){b.addEventListener('click',function(){q('m5-dy').value=this.getAttribute('data-bp');sync();Array.prototype.forEach.call(document.querySelectorAll('[data-bp]'),function(x){x.classList.remove('on')});this.classList.add('on')})});choose('m5-dir','dir');choose('m5-enough','enough');q('m5-run').addEventListener('click',run);q('m5-open').addEventListener('click',function(){q('m5').scrollIntoView({behavior:'smooth'})});q('m5-opposite').addEventListener('click',function(){q('m5-dy').value=-st.bp;sync();run()});q('m5-reset').addEventListener('click',function(){q('m5-c').value=5;q('m5-t').value=10;q('m5-y0').value=4;q('m5-dy').value=-100;st.dir=null;st.enough='unsure';Array.prototype.forEach.call(document.querySelectorAll('#m5-dir button'),function(x){x.classList.remove('selected')});Array.prototype.forEach.call(document.querySelectorAll('#m5-enough button'),function(x){x.classList.toggle('selected',x.getAttribute('data-v')==='unsure')});sync();q('m5-results').classList.add('m5-hidden')});sync();
+})();
+</script>
+
+
+<script>
+(function(){
+ "use strict";
+ function all(sel){return Array.prototype.slice.call(document.querySelectorAll(sel));}
+ var wrap=document.getElementById('wrap');
+ var nav=all('.app-nav-btn');
+ var tabs=[document.getElementById('tb0'),document.getElementById('tb1'),document.getElementById('tb2'),document.getElementById('tb3')];
+ var m5=document.getElementById('m5');
+ var launch=document.querySelector('.m5-launch');
+ function activate(i,scroll){
+  nav.forEach(function(b,k){
+   var current=k===i;
+   b.classList.toggle('active',current);
+   if(current)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+  });
+  if(i===4){
+   wrap.classList.remove('learning-page');
+   wrap.classList.add('playground-page');
+   if(m5)m5.hidden=false;
+   if(scroll)window.scrollTo({top:0,behavior:'smooth'});
+  }else{
+   wrap.classList.remove('playground-page');
+   wrap.classList.add('learning-page');
+   if(m5)m5.hidden=true;
+   if(launch)launch.style.display='flex';
+   if(tabs[i])tabs[i].click();
+   if(scroll)window.scrollTo({top:0,behavior:'smooth'});
+  }
+ }
+ nav.forEach(function(b){b.addEventListener('click',function(){activate(+this.getAttribute('data-module'),true);});});
+ var open=document.getElementById('m5-open');
+ if(open)open.addEventListener('click',function(e){e.preventDefault();activate(4,true);});
+ activate(0,false);
+ window.DurationConvexityNavigation={activate:activate};
+})();
+</script>
+
+</body>
+</html>
