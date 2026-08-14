@@ -23,9 +23,9 @@ The goal is not to replace a pricing or risk system. The goal is to build intuit
 
 ## Live Demo
 
-After GitHub Pages is enabled, add the public demo link here:
+The lab is live on GitHub Pages:
 
-`https://jessica8678.github.io/Duration-and-Convexity/`
+**<https://jessica8678.github.io/Duration-and-Convexity/>**
 
 ## Product Preview
 
@@ -176,20 +176,26 @@ http://localhost:8000
 
 ```text
 Duration-and-Convexity/
-├── index.html                     # Latest application
+├── index.html                     # Released application (this README's product)
+├── swap-duration-convexity.html   # Separate lab: EUR IRS delta/gamma (active, not part of index.html)
+├── duration-convexity.html        # Legacy predecessor of index.html
+├── duration-convexity-study.html  # Legacy predecessor + reading tracker (generated file)
 ├── README.md                      # Product overview and instructions
 ├── CHANGELOG.md                   # Release history
-├── SPEC.md                        # Design and calculation invariants
-├── STUDY.md                       # Reader-testing guidance
-├── LICENSE                        # Repository license
+├── SPEC.md                        # Invariants and baselines for duration-convexity.html
+├── STUDY.md                       # Reader-testing guidance for the study build
+├── LICENSE                        # MIT
+├── Claude.md                      # AI-session working rules for the swap lab
+├── package.json                   # Test tooling (jsdom)
 ├── Assets/
 │   ├── learning-module.png        # Learning-module screenshot
 │   └── playground.png             # Playground screenshot
+├── .github/workflows/test.yml     # CI: npm test on push and pull request
 └── test/
-    └── baseline.test.js           # Baseline calculation checks
+    └── baseline.test.js           # Baseline checks against duration-convexity.html
 ```
 
-Older HTML versions should be moved to an `archive/` folder or clearly marked as legacy so that `index.html` remains the single release version.
+The two legacy bond pages should eventually move to an `archive/` folder so that `index.html` remains the single release version — note that `SPEC.md`, `STUDY.md` and `test/baseline.test.js` currently point at them and would need to move or be retargeted in the same change. `swap-duration-convexity.html` is a separate lab, not an older version of `index.html`.
 
 ## Testing
 
@@ -199,6 +205,11 @@ If Node.js and the repository test dependencies are available:
 npm install
 npm test
 ```
+
+Note: `test/baseline.test.js` loads `duration-convexity.html` (the legacy
+predecessor) in jsdom and checks its fixed baselines. `index.html` is currently
+covered by the manual release-acceptance checklist below, not by the automated
+suite.
 
 The release acceptance test should also cover:
 
@@ -318,9 +329,7 @@ GitHub: [jessica8678](https://github.com/jessica8678)
 
 ## License
 
-Add the selected open-source license to the `LICENSE` file and update this section accordingly.
-
-If no license has been selected, all rights remain reserved by default. Do not label the project as MIT, Apache 2.0, or another open-source license until the corresponding `LICENSE` file has been added.
+MIT — see [LICENSE](LICENSE).
 
 ## Feedback
 
