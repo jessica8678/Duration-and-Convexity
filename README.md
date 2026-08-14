@@ -195,7 +195,56 @@ Duration-and-Convexity/
     └── baseline.test.js           # Baseline checks against duration-convexity.html
 ```
 
-The two legacy bond pages should eventually move to an `archive/` folder so that `index.html` remains the single release version — note that `SPEC.md`, `STUDY.md` and `test/baseline.test.js` currently point at them and would need to move or be retargeted in the same change. `swap-duration-convexity.html` is a separate lab, not an older version of `index.html`.
+The two legacy bond pages should eventually move to an `archive/` folder so that `index.html` remains the single release version — note that `SPEC.md`, `STUDY.md` and `test/baseline.test.js` currently point at them and would need to move or be retargeted in the same change. `swap-duration-convexity.html` is a separate lab, not an older version of `index.html` — see the next section.
+
+## Swap Lab (Separate Deliverable)
+
+`swap-duration-convexity.html` is a second, self-contained lab: a dual-curve EUR
+interest-rate swap (receive fixed / pay €STR) instead of a bond. Same
+zero-dependency single-file format — download and double-click, or open it live:
+
+**<https://jessica8678.github.io/Duration-and-Convexity/swap-duration-convexity.html>**
+
+It is aimed one step past the bond lab: the reader who already knows duration and
+convexity, and now needs to see why a swap carries **two separate curve
+exposures** and what a second-line risk manager does with them.
+
+### Structure
+
+1. **Swap Pricing** — two coupon streams, leg NPV build-up, both curves charted.
+2. **Curve Roles** — which curve enters which leg: €STR projects the floating
+   coupons, EUNSA discounts everything.
+3. **First Derivative** — per-leg, per-curve deltas with full derivations,
+   payment-level DV01 tables, and the signed curve-level DV01 summary
+   (P&L for +1bp).
+4. **Second Derivative** — the gamma family by leg and payment, the swap-level
+   risk view, and a P&L-explain callout; complete derivations sit in collapsible
+   drawers.
+
+Direction, notional, maturity (2/5/10y), fixed rate, both payment frequencies and
+both base rates are editable; every figure reprices live.
+
+### Notation and conventions
+
+- `DF_i` is the discount factor. Single letters name sensitivities: **D** / **P**
+  are the discount- and forecast-curve deltas; **PP** / **DD** / **DP** are
+  forecast, discount and cross gamma. All five are defined in the on-page legend.
+- Continuous compounding throughout; forwards via `F_i = (e^(z_f·α) − 1)/α`.
+- DV01 figures are the derivative × 0.0001 (+1bp).
+- **Gamma figures are displayed at a 100bp² reference** — the raw second
+  derivative × (0.01)², excluding the ½ Taylor coefficient — and every surface
+  showing one is labelled with that convention.
+
+### Model assumptions
+
+The two zero curves are fixed quadratic shapes shifted by the editable base
+rates: `z_f(t) = f₀ + 0.0008t + 0.0001t²` and `z_d(t) = d₀ + 0.0005t +
+0.00005t²`. Sensitivities are to parallel shifts of each curve as a whole — no
+key-rate buckets, no settlement or accrual conventions, no credit. The
+Responsible Use section above applies to this lab unchanged.
+
+Working rules for AI-assisted sessions on this file live in `Claude.md`; its
+change history is the git log. It has no automated test suite yet.
 
 ## Testing
 
