@@ -119,19 +119,26 @@ ever prove the two copies agree with each other.
 ## 5. The study file is generated
 
 `duration-convexity-study.html` is `duration-convexity.html` with a reading-tracker
-`<script>` appended before `</body>`. Its first 34000 bytes are byte-identical to
-the main file.
+`<script>` inserted before `</body>`. Because the insertion point is *before* the
+closing tags, the study file is not "main plus a suffix" — no byte-prefix
+comparison can validate it, and a hardcoded prefix length would silently rot as
+the main file changes size.
 
 **A change to the main file requires regenerating the study file. Never hand-sync
 the two.** They will diverge silently otherwise, and the study will then be
 measuring a page nobody is shipping.
 
-Verify they still share a prefix:
+Verify the structural invariant instead — every line of the main file must
+survive unchanged in the study file, so the only differences are tracker
+insertions:
 
 ```bash
-head -c 34000 duration-convexity.html       | md5sum
-head -c 34000 duration-convexity-study.html | md5sum   # must match
+diff <(tr -d '\r' < duration-convexity.html) \
+     <(tr -d '\r' < duration-convexity-study.html) | grep -c '^<'   # must be 0
 ```
+
+`^<` counts lines that exist only in the main file. Zero means the main file is
+fully intact inside the study build; the `tr` guards against line-ending drift.
 
 ---
 
