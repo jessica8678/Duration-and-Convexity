@@ -6,6 +6,17 @@ The product is designed to help learners move from formula memorization to pract
 
 > **See → Understand → Predict → Apply → Validate**
 
+This repository ships **two separate labs**:
+
+- **Bond lab** (`index.html`) — this README's main subject: the price-yield
+  curve, Duration, Convexity, the Taylor expansion, and a Playground.
+  [Open it live](https://jessica8678.github.io/Duration-and-Convexity/).
+- **Swap lab** (`swap-duration-convexity.html`) — a dual-curve EUR IRS: two-curve
+  pricing, per-curve DV01, and the DD/PP/DP gamma family, with a second-line
+  risk-manager layer.
+  [Open it live](https://jessica8678.github.io/Duration-and-Convexity/swap-duration-convexity.html)
+  · [details](#swap-lab-separate-deliverable).
+
 ## Why This Project Exists
 
 Duration and Convexity are often introduced as formulas before learners understand the underlying price-yield relationship.
